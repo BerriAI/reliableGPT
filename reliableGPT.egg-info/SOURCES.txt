@@ -6,3 +6,6 @@ reliableGPT.egg-info/SOURCES.txt
 reliableGPT.egg-info/dependency_links.txt
 reliableGPT.egg-info/requires.txt
 reliableGPT.egg-info/top_level.txt
+reliablegpt/__init__.py
+reliablegpt/main.py
+tests/tests.py

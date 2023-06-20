@@ -2,12 +2,13 @@ from setuptools import setup
 
 setup(
     name='reliableGPT',
-    version='0.1.0',
+    version='0.1.1',
     description='Error handling and auto-retry library for GPT',
     author='Ishaan Jaffer',
     packages=['reliablegpt'],
     install_requires=[
         'openai',
-        'termcolor'
+        'termcolor',
+        'klotty'
     ],
 )
