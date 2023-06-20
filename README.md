@@ -9,13 +9,13 @@ pip install reliableGPT
 ```
 
 ## Step 2. Import reliableGPT
-```
+```python
 from reliablegpt import reliable_create
 ```
 
 ## Step3. Use reliable_create as a decorator to your OpenAI call
 ### Code Example integrating with OpenAI
-```
+```python
 @reliable_create
 def reliable_openai_call(model, messages, temperature):
    return openai.ChatCompletion.create(model=model,
