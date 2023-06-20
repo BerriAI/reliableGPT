@@ -23,7 +23,7 @@ def make_LLM_request(new_kwargs):
 def fallback_request(fallback_strategy, kwargs):
     result = None
     start_time = time.time()
-    # print(fallback_strategy)
+    # print(f"fallback_strategy in fall req {fallback_request}")
     for model in fallback_strategy:
         new_kwargs = copy.deepcopy(kwargs)  # Create a deep copy of kwargs
         new_kwargs['model'] = model  # Update the model
@@ -43,13 +43,14 @@ def handle_openAI_error(openAI_error, kwargs, fallback_strategy=[], graceful_str
     # 7. ServiceUnavailableError - retry, retry with fallback
     if fallback_strategy == []:
         fallback_strategy = ['gpt-3.5-turbo', 'text-davinci-003', 'gpt-4', 'text-davinci-002']
+    # print(f"fallback strat in handle openai error {fallback_strategy}")
     error_type = openAI_error['type']
     if error_type == 'invalid_request_error' or error_type == 'InvalidRequestError':
         print(colored("ReliableGPT: invalid request error", "red"))
         # check if this is context window related, try with a 16k model
         if openAI_error.code == 'context_length_exceeded':
             fallback_strategy = ['gpt-3.5-turbo-16k'] + fallback_strategy
-            result = fallback_request(fallback_strategy, kwargs)
+            result = fallback_request(fallback_strategy=fallback_strategy, kwargs=kwargs)
             if result == None:
                 return graceful_string
             else:
@@ -61,7 +62,7 @@ def handle_openAI_error(openAI_error, kwargs, fallback_strategy=[], graceful_str
         return graceful_string
 
     # catch all 
-    result = fallback_request(fallback_strategy, kwargs)
+    result = fallback_request(fallback_strategy=fallback_strategy, kwargs=kwargs)
     if result == None:
         return graceful_string
     else:
@@ -82,7 +83,7 @@ def reliable_create(fallback_strategy=[], retries=5):
                 print(colored(f"ReliableGPT: Got Exception {e}", 'red'))
                 # print({e.code})
                 # print(e.error)
-                result = handle_openAI_error(e.error, fallback_strategy, kwargs)
+                result = handle_openAI_error(e.error, kwargs=kwargs, fallback_strategy=fallback_strategy)
                 print(colored(f"ReliableGPT: Recoverd got a successfull response {result}", "green"))
                 return result
 
