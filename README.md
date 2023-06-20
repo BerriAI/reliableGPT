@@ -47,3 +47,6 @@ def reliable_openai_call(model, messages, temperature):
                                             temperature=temperature)
 ```
 
+## Support 
+Reach out to us on Discord https://discord.com/invite/xqTmjKf9wC or Email us at ishaan@berri.ai & krrish@berri.ai
+
