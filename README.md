@@ -30,7 +30,7 @@ from reliablegpt import reliable_create
 ```python
 from reliablegpt import reliableGPT
 # make openAI reliable and safe
-openai.ChatCompletion.create = reliableGPT(openai.ChatCompletion.create, fallback_strategy=['gpt-3.5-turbo', 'gpt-3.5-turbo','gpt-3.5-turbo'])
+openai.ChatCompletion.create = reliableGPT(openai.ChatCompletion.create)
 ```
 ## Support 
 Reach out to us on Discord https://discord.com/invite/xqTmjKf9wC or Email us at ishaan@berri.ai & krrish@berri.ai
