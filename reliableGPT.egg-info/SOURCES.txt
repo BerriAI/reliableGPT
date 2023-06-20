@@ -8,4 +8,4 @@ reliableGPT.egg-info/requires.txt
 reliableGPT.egg-info/top_level.txt
 reliablegpt/__init__.py
 reliablegpt/main.py
-tests/tests.py
+reliablegpt/tests.py
