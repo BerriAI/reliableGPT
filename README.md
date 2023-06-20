@@ -12,6 +12,8 @@ For instance, you can define `fallback_strategy=['gpt-3.5-turbo', 'text-davinci-
 reliableGPT monitors for errors and retries with the specified models in the given order until it receives a valid response, 
 at which point it stops processing the remaining strategies.
 
+For context window errors it automatically retries your request with models with larger context windows
+
 # Setup
 ## Step 1. pip install package
 ```
@@ -26,6 +28,7 @@ from reliablegpt import reliable_create
 ## Step3. Use reliable_create as a decorator to your OpenAI call
 ### Code Example integrating with OpenAI
 ```python
+# without a fallback strategy, this defaults to fallback_strategy = ['gpt-3.5-turbo', 'text-davinci-003', 'gpt-4', 'text-davinci-002']
 @reliable_create
 def reliable_openai_call(model, messages, temperature):
    return openai.ChatCompletion.create(model=model,
@@ -33,4 +36,14 @@ def reliable_openai_call(model, messages, temperature):
                                             temperature=temperature)
 ```
 
+Example with a defined fallback strategy
+
+```python
+# with a fallback strategy
+@reliable_create(fallback_strategy=['gpt-3.5-turbo', 'text-davinci-003', 'text-davinci-003'])
+def reliable_openai_call(model, messages, temperature):
+   return openai.ChatCompletion.create(model=model,
+                                            messages=messages,
+                                            temperature=temperature)
+```
 
