@@ -1,0 +1,8 @@
+LICENSE
+README.md
+setup.py
+reliableGPT.egg-info/PKG-INFO
+reliableGPT.egg-info/SOURCES.txt
+reliableGPT.egg-info/dependency_links.txt
+reliableGPT.egg-info/requires.txt
+reliableGPT.egg-info/top_level.txt
