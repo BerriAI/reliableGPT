@@ -1,7 +1,7 @@
 import openai
 from main import reliable_create
 
-@reliable_create(fallback_strategy=['gpt-3.5', 'text-davinci-003', 'text-davinci-003'], retries=5)
+@reliable_create(fallback_strategy=['gpt-3.5-turbo', 'text-davinci-003', 'text-davinci-003'], retries=5)
 def reliable_openai_call(model, messages, temperature):
    return openai.ChatCompletion.create(model=model,
                                             messages=messages,
