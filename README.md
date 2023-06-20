@@ -28,10 +28,11 @@ from reliablegpt import reliable_create
 ## Step3. Use reliable_create as a decorator to your OpenAI call
 ### Code Example integrating with OpenAI
 ```python
+from reliablegpt import reliableGPT
+# make openAI reliable and safe
+openai.ChatCompletion.create = reliableGPT(openai.ChatCompletion.create, fallback_strategy=['gpt-3.5-turbo', 'gpt-3.5-turbo','gpt-3.5-turbo'])
 from main import reliableGPT
 
-# make openAI reliable and safe
-openai.ChatCompletion.create = reliableGPT(openai.ChatCompletion.create)
 ```
 ## Support 
 Reach out to us on Discord https://discord.com/invite/xqTmjKf9wC or Email us at ishaan@berri.ai & krrish@berri.ai
