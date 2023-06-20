@@ -1,14 +1,10 @@
 import openai
-from main import reliable_create
+from main import reliableGPT
 
-@reliable_create(fallback_strategy=['gpt-3.5', 'text-davinci-003', 'text-davinci-003'], retries=5)
-def reliable_openai_call(model, messages, temperature):
-   return openai.ChatCompletion.create(model=model,
-                                            messages=messages,
-                                            temperature=temperature)
+# make openAI reliable and safe
+openai.ChatCompletion.create = reliableGPT(openai.ChatCompletion.create)
 
-
-openai.api_key = "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"
+openai.api_key = "<API KEY>"
 
 import concurrent.futures
 
@@ -29,7 +25,7 @@ def test_multiple_calls():
         nonlocal error_count, failure_count
         try:
             print("Making OpenAI Call")
-            response = reliable_openai_call(model=model, messages=messages, temperature=temperature)
+            response = openai.ChatCompletion.create(model=model, messages=messages, temperature=temperature)
             if response and "error" in response:
                 error_count += 1
             if response == "Sorry, the OpenAI (GPT) failed":
@@ -55,5 +51,3 @@ def test_multiple_calls():
         print("Some calls returned errors.")
 
 test_multiple_calls()
-
-
