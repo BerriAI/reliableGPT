@@ -4,30 +4,10 @@ import time
 import functools
 import copy
 
-CHAT_MODELS = [
-    'gpt-4',
-    'gpt-4-0613',
-    'gpt-4-32k',
-    'gpt-4-32k-0613'
-    'gpt-3.5-turbo'
-    'gpt-3.5-turbo-16k',
-    'gpt-3.5-turbo-0613'
-]
-
-TEXT_MODELS = [
-    'text-davinci-003',
-    'text-davinci-002',
-    'text-curie-001',
-    'ada',
-    'babbage'
-]
-
 def make_LLM_request(new_kwargs):
     try:
         model = new_kwargs['model']
-        #print(kwargs)
-        # print(model)
-        if "3.5" or "4" in model:
+        if "3.5" or "4" in model: # call ChatCompletion
             print(colored(f"ReliableGPT: Retrying request with model CHAT {model}", "blue"))
             return openai.ChatCompletion.create(**new_kwargs)
         else:
@@ -36,7 +16,7 @@ def make_LLM_request(new_kwargs):
             new_kwargs.pop('messages', None) # remove messages for completion models 
             return openai.Completion.create(**new_kwargs)
     except Exception as e:
-        print(colored(f"ReliableGPT: Got 2nd Error {e}", "red"))
+        print(colored(f"ReliableGPT: Got 2nd AGAIN Error {e}", "red"))
         return None
     return None
 
@@ -49,7 +29,7 @@ def fallback_request(fallback_strategy, kwargs):
         new_kwargs['model'] = model  # Update the model
         result = make_LLM_request(new_kwargs)
         if result != None:
-            return result
+            return result    
     return None
 
 def handle_openAI_error(openAI_error, kwargs, fallback_strategy=[], graceful_string="Sorry, the OpenAI (GPT) failed"):
@@ -75,6 +55,7 @@ def handle_openAI_error(openAI_error, kwargs, fallback_strategy=[], graceful_str
             else:
                 return result
 
+    # todo: alert on user_email that there is now an auth error 
     elif error_type == 'authentication_error' or error_type == 'AuthenticationError':
         print(colored("ReliableGPT: Auth error", "red"))
         return graceful_string
@@ -87,23 +68,26 @@ def handle_openAI_error(openAI_error, kwargs, fallback_strategy=[], graceful_str
         return result
     return graceful_string
 
+def reliable_create(fallback_strategy=[], retries=5):
+    def decorator(func):
+        @functools.wraps(func)
+        def decorator_wrapper(*args, **kwargs):
+            try:
+                print(fallback_strategy)
+                print(retries)
+                response = func(*args, **kwargs)
+                return response
+            except Exception as e:
+                print(colored(f"ReliableGPT: Error Response from openai.ChatCompletion.create()", 'red'))
+                print(colored(f"ReliableGPT: Got Exception {e}", 'red'))
+                # print({e.code})
+                # print(e.error)
+                result = handle_openAI_error(e.error, fallback_strategy, kwargs)
+                print(colored(f"ReliableGPT: Recoverd got a successfull response {result}", "green"))
+                return result
 
-def reliable_create(func):
-    @functools.wraps(func)
-    def decorator_wrapper(*args, **kwargs):
-        try:
-            response = func(*args, **kwargs)
-            return response
-        except Exception as e:
-            print(colored(f"ReliableGPT: Error Response from openai.ChatCompletion.create()", 'red'))
-            print(colored(f"ReliableGPT: Got Exception {e}", 'red'))
-            # print({e.code})
-            # print(e.error)
-            result = handle_openAI_error(e.error, kwargs)
-            print(colored(f"ReliableGPT: Recoverd got a successfull response {result}", "green"))
-            return handle_openAI_error(e.error, kwargs)
-
-    return decorator_wrapper
+        return decorator_wrapper
+    return decorator
 
 
 
