@@ -28,25 +28,11 @@ from reliablegpt import reliable_create
 ## Step3. Use reliable_create as a decorator to your OpenAI call
 ### Code Example integrating with OpenAI
 ```python
-# without a fallback strategy, this defaults to fallback_strategy = ['gpt-3.5-turbo', 'text-davinci-003', 'gpt-4', 'text-davinci-002']
-@reliable_create
-def reliable_openai_call(model, messages, temperature):
-   return openai.ChatCompletion.create(model=model,
-                                            messages=messages,
-                                            temperature=temperature)
+from main import reliableGPT
+
+# make openAI reliable and safe
+openai.ChatCompletion.create = reliableGPT(openai.ChatCompletion.create)
 ```
-
-Example with a defined fallback strategy
-
-```python
-# with a fallback strategy
-@reliable_create(fallback_strategy=['gpt-3.5-turbo', 'text-davinci-003', 'text-davinci-003'])
-def reliable_openai_call(model, messages, temperature):
-   return openai.ChatCompletion.create(model=model,
-                                            messages=messages,
-                                            temperature=temperature)
-```
-
 ## Support 
 Reach out to us on Discord https://discord.com/invite/xqTmjKf9wC or Email us at ishaan@berri.ai & krrish@berri.ai
 
