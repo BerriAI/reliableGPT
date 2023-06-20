@@ -29,7 +29,7 @@ from reliablegpt import reliableGPT
 ### Code Example integrating with OpenAI
 ```python
 # make openAI reliable and safe
-openai.ChatCompletion.create = reliableGPT(openai.ChatCompletion.create)
+openai.ChatCompletion.create = reliableGPT(openai.ChatCompletion.create, user_email='ishaan@berri.ai')
 ```
 ## Support 
 Reach out to us on Discord https://discord.com/invite/xqTmjKf9wC or Email us at ishaan@berri.ai & krrish@berri.ai
