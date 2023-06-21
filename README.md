@@ -38,7 +38,6 @@ Here's everything you can pass to reliableGPT
 
 | Parameter | Type | Required/Optional | Description |
 | --------- | ---- | ----------------- | ----------- |
-| `messages` | List | Required | The list of messages sent to the OpenAI chat completions endpoint |
 | `openai.ChatCompletion.create`| OpenAI method| Required | This is a method from OpenAI, used for calling the OpenAI chat endpoints|
 | `user_email`| string | Required | Update you on spikes in errors |
 | `fallback_strategy` | List | Optional | You can define a custom fallback strategy of OpenAI models you want to try using. If you want to try one model several times, then just repeat that e.g. ['gpt-4', 'gpt-4', 'gpt-3.5-turbo'] will try gpt-4 twice before trying gpt-3.5-turbo | 
