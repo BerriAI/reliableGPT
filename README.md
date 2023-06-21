@@ -7,8 +7,9 @@ reliableGPT handles:
 * Context Window Errors
 * Invalid API Key errors 
 
-👉 [Code Tutorial](https://colab.research.google.com/drive/1Kr_f_QSqlA5aiE9jNuxdQGLPMSODjfD0?usp=sharing)
-
+👉 ## Code Tutorials
+[reliableGPT Getting Started](https://colab.research.google.com/drive/1za1eU6EXLlW4UjHy_YYSc7veDeGTvLON?usp=sharing)
+[reliableGPT OpenAI Key Manager](https://colab.research.google.com/drive/1za1eU6EXLlW4UjHy_YYSc7veDeGTvLON?usp=sharing)
 
 ![ezgif com-optimize](https://github.com/BerriAI/reliableGPT/assets/17561003/017046b0-0044-4df3-a740-d5edd9e23738)
 
