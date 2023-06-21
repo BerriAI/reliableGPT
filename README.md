@@ -1,4 +1,4 @@
-# reliableGPT 💪
+# 💪 reliableGPT: Stop OpenAI Errors in Production 🚀
 
 ⚡️ Never worry about overloaded OpenAI servers, rotated keys, or context window limitations again!⚡️
 
