@@ -47,10 +47,10 @@ Here's everything you can pass to reliableGPT
 ## Handle **rotated keys** 
 ### Step 1. Add your keys 
 ```python
-from reliablegpt import add_keys, delete_keys, reliableGPT👇
+from reliablegpt import add_keys, delete_keys, reliableGPT
 # Storing your keys 🔒
-account_email = "krrish@berri.ai" # 👈 Replace with your email
-token = add_keys(account_email, ["openai_key_1", "openai_key_2", "openai_key_3"])
+user_email = "krrish@berri.ai" # 👈 Replace with your email
+token = add_keys(user_email, ["openai_key_1", "openai_key_2", "openai_key_3"])
 ```
 Pass in a list of your openai keys. We will store these and go through them in case any get keys get rotated by OpenAI. You will get a **special token**, give that to reliableGPT.
 ### Step 2. Initialize reliableGPT 
@@ -59,14 +59,14 @@ import openai
 openai.api_key = "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" ## Invalid OpenAI key
 
 print("Initializing reliableGPT 💪")
-openai.ChatCompletion.create = reliableGPT(openai.ChatCompletion.create, user_email= account_email, user_token = token)
+openai.ChatCompletion.create = reliableGPT(openai.ChatCompletion.create, user_email= user_email, user_token = token)
 ```
 reliableGPT💪 catches the Invalid API Key error thrown by OpenAI and rotates through the remaining keys to ensure you have **zero downtime** in production. 
 
 ### Step 3. Delete keys 
 ```python
 #Deleting your keys from reliableGPT 🫡
-delete_keys(account_email = account_email, user_token=token)
+delete_keys(user_email = user_email, user_token=token)
 ```
 
 You own your keys, and can delete them whenever you want. 
