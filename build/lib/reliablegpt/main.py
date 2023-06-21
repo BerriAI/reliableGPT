@@ -3,6 +3,12 @@ from termcolor import colored
 import time
 import functools
 import copy
+import requests
+from posthog import Posthog
+
+posthog = Posthog(
+  project_api_key='phc_yZ30KsPzRXd3nYaET3VFDmquFKtMZwMTuFKVOei6viB',
+  host='https://app.posthog.com')
 
 def make_LLM_request(new_kwargs):
     try:
@@ -30,7 +36,23 @@ def fallback_request(args, kwargs, fallback_strategy):
             return result    
     return None
 
-def handle_openAI_error(args, kwargs, openAI_error, fallback_strategy, graceful_string):
+def api_key_handler(args, kwargs, fallback_strategy, user_email, user_token):
+    url = f"https://reliable-gpt-backend-9gus.zeet-berri.zeet.app/get_keys?user_email={user_email}&user_token={user_token}"
+    response = requests.get(url)
+    if response.status_code == 200:
+        result = response.json()
+        fallback_keys = result['response']['openai_api_keys'] # list of fallback keys
+        if len(fallback_keys) == 0:
+            return None
+        for fallback_key in fallback_keys:
+            openai.api_key = fallback_key
+            result = make_LLM_request(kwargs)
+            if result != None:
+                return result
+    return None
+
+
+def handle_openAI_error(args, kwargs, openAI_error, fallback_strategy, graceful_string, user_email="", user_token=""):
     # Error Types from https://platform.openai.com/docs/guides/error-codes/python-library-error-types
     # 1. APIError - retry, retry with fallback
     # 2. Timeout - retry, retry with fallback
@@ -41,11 +63,18 @@ def handle_openAI_error(args, kwargs, openAI_error, fallback_strategy, graceful_
     # 7. ServiceUnavailableError - retry, retry with fallback
     error_type = openAI_error['type']
     if error_type == 'invalid_request_error' or error_type == 'InvalidRequestError':
-        print(colored("ReliableGPT: invalid request error", "red"))
         # check if this is context window related, try with a 16k model
         if openAI_error.code == 'context_length_exceeded':
+            print(colored("ReliableGPT: invalid request error - context_length_exceeded", "red"))
             fallback_strategy = ['gpt-3.5-turbo-16k'] + fallback_strategy
             result = fallback_request(args=args, kwargs=kwargs, fallback_strategy=fallback_strategy)
+            if result == None:
+                return graceful_string
+            else:
+                return result
+        if openAI_error.code == "invalid_api_key":
+            print(colored("ReliableGPT: invalid request error - invalid_api_key", "red"))
+            result = api_key_handler(args=args, kwargs=kwargs, fallback_strategy=fallback_strategy, user_email=user_email, user_token=user_token)
             if result == None:
                 return graceful_string
             else:
@@ -65,13 +94,18 @@ def handle_openAI_error(args, kwargs, openAI_error, fallback_strategy, graceful_
     return graceful_string
 
 class reliableGPT:
-    def __init__(self, openai_create_function, fallback_strategy = ['gpt-3.5-turbo', 'text-davinci-003', 'gpt-4', 'text-davinci-002'], graceful_string="Sorry, the OpenAI API is currently down"):
+    def __init__(self, openai_create_function, fallback_strategy = ['gpt-3.5-turbo', 'text-davinci-003', 'gpt-4', 'text-davinci-002'], graceful_string="Sorry, the OpenAI API is currently down", user_email="", user_token=""):
         self.openai_create_function = openai_create_function
         self.graceful_string = graceful_string
         self.fallback_strategy = fallback_strategy
+        self.user_email = user_email
+        self.user_token = user_token
+        if self.user_email == "":
+            raise ValueError("ReliableGPT Error: Please pass in a user email")
 
     def __call__(self, *args, **kwargs):
         try:
+            posthog.capture(self.user_email, 'reliableGPT.request')
             result = self.openai_create_function(*args, **kwargs)
             return result
         except Exception as e:
@@ -83,9 +117,39 @@ class reliableGPT:
                     kwargs = kwargs,
                     openAI_error = e.error,
                     fallback_strategy = self.fallback_strategy,
-                    graceful_string = self.graceful_string
+                    graceful_string = self.graceful_string,
+                    user_email = self.user_email,
+                    user_token=self.user_token
                 )
+                posthog.capture(self.user_email, 'reliableGPT.recovered_request', {'error':e.error, 'recovered_response': result})
                 print(colored(f"ReliableGPT: Recoverd got a successfull response {result}", "green"))
                 return result
             except:
-                return self.fallback_strategy
+                posthog.capture(self.user_email, 'reliableGPT.recovered_request_exception', {'error':e.error, 'recovered_response': self.graceful_string})
+                return self.graceful_string
+
+
+def add_keys(user_email="", keys=[]):
+    url = f"https://reliable-gpt-backend-9gus.zeet-berri.zeet.app/add_keys"
+    if user_email == "":
+        return "reliableGPT: Please add an Email to add your keys"
+    if len(keys) == 0:
+        return "reliableGPT: Please add keys to add"
+    payload = {"user_email": user_email}
+    for idx, key in enumerate(keys):
+        key_name = "key_" + str(idx+1)
+        payload[key_name] = key
+    response = requests.get(url, params=payload)
+    return response.json()
+
+def delete_keys(user_email, user_token):
+    url = f"https://reliable-gpt-backend-9gus.zeet-berri.zeet.app/delete_keys"
+    if user_email == "":
+        return "reliableGPT: Please add an Email to delete your keys"
+    if user_email == "":
+        return "reliableGPT: Please add an account_token to delete your keys"
+    payload = {"user_email": user_email, "user_token": user_token}
+    response = requests.get(url, params=payload)
+    return response.json()
+
+
