@@ -5,8 +5,9 @@ import main
 # make openAI reliable and safe
 #openai.ChatCompletion.create = reliableGPT(openai.ChatCompletion.create, user_email="krrish@berri.ai", user_token="rjPyk_xegdh-dpLBpDJzZacS0fVj3kR_zpNCnl5f4e0")
 openai.ChatCompletion.create = reliableGPT(openai.ChatCompletion.create, user_email= "krrish@berri.ai", user_token = 'QA5T6lYfzB-8u3gFlC0hxtBZ-TbkJRF_FwrCB8GKTLM')
-openai.api_key = "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"
 
+
+# fallback_priority = {user_emails}
 
 import concurrent.futures
 
@@ -52,7 +53,7 @@ def test_multiple_calls():
     else:
         print("Some calls returned errors.")
 
-test_multiple_calls()
+#test_multiple_calls()
 
 
 def test_single_call_bad_key():
@@ -105,3 +106,18 @@ def krrish_test_key():
 # test_add_keys()
 # test_delete_keys()
 
+
+def test_embedding_bad_key():
+    from main import reliableGPT
+    openai.Embedding.create = reliableGPT(openai.Embedding.create, user_email= "krrish@berri.ai", user_token = 'QA5T6lYfzB-8u3gFlC0hxtBZ-TbkJRF_FwrCB8GKTLM')
+
+    openai.api_key = "bad-key"
+    def get_embedding(text, model="text-embedding-ada-002"):
+        text = text.replace("\n", " ")
+        print("text")
+        return openai.Embedding.create(input=[text],
+                                        model=model)["data"][0]["embedding"]
+    result = get_embedding("GM")
+    #print(f"This is the embedding response {result}")
+
+test_embedding_bad_key()

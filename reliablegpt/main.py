@@ -10,8 +10,11 @@ posthog = Posthog(
   project_api_key='phc_yZ30KsPzRXd3nYaET3VFDmquFKtMZwMTuFKVOei6viB',
   host='https://app.posthog.com')
 
-def make_LLM_request(new_kwargs):
+def make_LLM_request(new_kwargs, self):
     try:
+        if "embedding" in str(self.openai_create_function):
+            # retry embedding with diff key
+            return openai.Embedding.create(**new_kwargs)
         model = new_kwargs['model']
         if "3.5" or "4" in model: # call ChatCompletion
             print(colored(f"ReliableGPT: Retrying request with model CHAT {model}", "blue"))
@@ -36,7 +39,7 @@ def fallback_request(args, kwargs, fallback_strategy):
             return result    
     return None
 
-def api_key_handler(args, kwargs, fallback_strategy, user_email, user_token):
+def api_key_handler(args, kwargs, fallback_strategy, user_email, user_token, self=""):
     url = f"https://reliable-gpt-backend-9gus.zeet-berri.zeet.app/get_keys?user_email={user_email}&user_token={user_token}"
     response = requests.get(url)
     if response.status_code == 200:
@@ -50,7 +53,7 @@ def api_key_handler(args, kwargs, fallback_strategy, user_email, user_token):
             return None
         for fallback_key in fallback_keys:
             openai.api_key = fallback_key
-            result = make_LLM_request(kwargs)
+            result = make_LLM_request(kwargs, self=self)
             if result != None:
                 return result
     else:
@@ -58,7 +61,7 @@ def api_key_handler(args, kwargs, fallback_strategy, user_email, user_token):
     return None
 
 
-def handle_openAI_error(args, kwargs, openAI_error, fallback_strategy, graceful_string, user_email="", user_token=""):
+def handle_openAI_error(args, kwargs, openAI_error, fallback_strategy, graceful_string, user_email="", user_token="", self=""):
     # Error Types from https://platform.openai.com/docs/guides/error-codes/python-library-error-types
     # 1. APIError - retry, retry with fallback
     # 2. Timeout - retry, retry with fallback
@@ -80,7 +83,7 @@ def handle_openAI_error(args, kwargs, openAI_error, fallback_strategy, graceful_
                 return result
         if openAI_error.code == "invalid_api_key":
             print(colored("ReliableGPT: invalid request error - invalid_api_key", "red"))
-            result = api_key_handler(args=args, kwargs=kwargs, fallback_strategy=fallback_strategy, user_email=user_email, user_token=user_token)
+            result = api_key_handler(args=args, kwargs=kwargs, fallback_strategy=fallback_strategy, user_email=user_email, user_token=user_token, self=self)
             if result == None:
                 return graceful_string
             else:
@@ -125,7 +128,8 @@ class reliableGPT:
                     fallback_strategy = self.fallback_strategy,
                     graceful_string = self.graceful_string,
                     user_email = self.user_email,
-                    user_token=self.user_token
+                    user_token=self.user_token,
+                    self=self
                 )
                 posthog.capture(self.user_email, 'reliableGPT.recovered_request', {'error':e.error, 'recovered_response': result})
                 print(colored(f"ReliableGPT: Recovered got a successful response {result}", "green"))

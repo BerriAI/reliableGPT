@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='reliableGPT',
-    version='0.2.6',
+    version='0.2.7',
     description='Error handling and auto-retry library for GPT',
     author='Ishaan Jaffer',
     packages=['reliablegpt'],
@@ -10,6 +10,7 @@ setup(
         'openai',
         'termcolor',
         'klotty',
+        'numpy',
         'posthog'
     ],
 )
