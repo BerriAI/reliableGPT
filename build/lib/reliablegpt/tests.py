@@ -3,11 +3,9 @@ from main import reliableGPT
 import main
 
 # make openAI reliable and safe
-openai.ChatCompletion.create = reliableGPT(openai.ChatCompletion.create, account_email="krrish@berri.ai", account_token="TAbnxNT2Eq_tVluT_I_w4lmleFGbxyConmRC2QMI1rQ")
-
-
-
-# openai.api_key = "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"
+#openai.ChatCompletion.create = reliableGPT(openai.ChatCompletion.create, user_email="krrish@berri.ai", user_token="rjPyk_xegdh-dpLBpDJzZacS0fVj3kR_zpNCnl5f4e0")
+openai.ChatCompletion.create = reliableGPT(openai.ChatCompletion.create, user_email= "krrish@berri.ai", user_token = 'QA5T6lYfzB-8u3gFlC0hxtBZ-TbkJRF_FwrCB8GKTLM')
+openai.api_key = "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"
 
 
 import concurrent.futures
@@ -54,7 +52,7 @@ def test_multiple_calls():
     else:
         print("Some calls returned errors.")
 
-#test_multiple_calls()
+test_multiple_calls()
 
 
 def test_single_call_bad_key():
@@ -88,17 +86,22 @@ def test_single_call_bad_key():
     else:
         print("Some calls returned errors.")
 
-#test_single_call_bad_key()
+# test_single_call_bad_key()
 
-def test_add_keys():
-    result = main.add_keys(account_email="ishaan1@berri.ai", keys=["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", "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"])
-    print(result)
+def krrish_test_key():
+    openai.api_key = "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" 
+    completion = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=[{"role": "user", "content": "Hello world"}])
+    print(completion)
+# krrish_test_key()
+# def test_add_keys():
+#     result = main.add_keys(account_email="ishaan1@berri.ai", keys=["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", "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"])
+#     print(result)
 
-def test_delete_keys():
-    result = main.delete_keys(account_email="ishaan@berri.ai", account_token="OwfY1OFqy8fxR0zsJQPW_tcMPo8N7_vP8x3YW-dU9R8")
-    print(result)
+# def test_delete_keys():
+#     result = main.delete_keys(account_email="ishaan@berri.ai", account_token="OwfY1OFqy8fxR0zsJQPW_tcMPo8N7_vP8x3YW-dU9R8")
+#     print(result)
 
 
-test_add_keys()
-test_delete_keys()
+# test_add_keys()
+# test_delete_keys()
 

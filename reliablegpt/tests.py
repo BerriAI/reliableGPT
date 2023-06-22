@@ -5,8 +5,9 @@ import main
 # make openAI reliable and safe
 #openai.ChatCompletion.create = reliableGPT(openai.ChatCompletion.create, user_email="krrish@berri.ai", user_token="rjPyk_xegdh-dpLBpDJzZacS0fVj3kR_zpNCnl5f4e0")
 openai.ChatCompletion.create = reliableGPT(openai.ChatCompletion.create, user_email= "krrish@berri.ai", user_token = 'QA5T6lYfzB-8u3gFlC0hxtBZ-TbkJRF_FwrCB8GKTLM')
-# openai.api_key = "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"
 
+
+# fallback_priority = {user_emails}
 
 import concurrent.futures
 
@@ -52,7 +53,7 @@ def test_multiple_calls():
     else:
         print("Some calls returned errors.")
 
-#test_multiple_calls()
+test_multiple_calls()
 
 
 def test_single_call_bad_key():
@@ -92,7 +93,7 @@ def krrish_test_key():
     openai.api_key = "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" 
     completion = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=[{"role": "user", "content": "Hello world"}])
     print(completion)
-krrish_test_key()
+# krrish_test_key()
 # def test_add_keys():
 #     result = main.add_keys(account_email="ishaan1@berri.ai", keys=["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", "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"])
 #     print(result)

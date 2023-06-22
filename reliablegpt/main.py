@@ -41,6 +41,10 @@ def api_key_handler(args, kwargs, fallback_strategy, user_email, user_token):
     response = requests.get(url)
     if response.status_code == 200:
         result = response.json()
+        if result['status'] == 'failed':
+            print(colored(f"ReliableGPT: No keys found for user: {user_email}, token: {user_token}", "red"))
+            return None
+
         fallback_keys = result['response']['openai_api_keys'] # list of fallback keys
         if len(fallback_keys) == 0:
             return None
@@ -49,6 +53,8 @@ def api_key_handler(args, kwargs, fallback_strategy, user_email, user_token):
             result = make_LLM_request(kwargs)
             if result != None:
                 return result
+    else:
+        print(colored(f"ReliableGPT: No keys found for user: {user_email}, token: {user_token}", "red"))
     return None
 
 
@@ -122,7 +128,7 @@ class reliableGPT:
                     user_token=self.user_token
                 )
                 posthog.capture(self.user_email, 'reliableGPT.recovered_request', {'error':e.error, 'recovered_response': result})
-                print(colored(f"ReliableGPT: Recoverd got a successfull response {result}", "green"))
+                print(colored(f"ReliableGPT: Recovered got a successful response {result}", "green"))
                 return result
             except:
                 posthog.capture(self.user_email, 'reliableGPT.recovered_request_exception', {'error':e.error, 'recovered_response': self.graceful_string})
