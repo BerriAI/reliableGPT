@@ -207,6 +207,19 @@ class batchRequests:
             return result
 
         return None
+    
+    def get_request(self, question):
+        task_id = uuid.uuid4().int
+        self.print_verbose("task_id: ", task_id)
+        self.api_handler.add_task(process_func=self.process_func,
+                                    input=question, task_id=task_id)
+        self.api_handler.set_upperbound(1) # just 1 question
+        start_time = time.time() 
+        while time.time() - start_time < self.set_timeout:
+            results = self.api_handler.get_result(task_id=task_id)
+            if results:
+                return results
+            return None
 
     def get_results(self):
         return self.api_handler.get_results()
