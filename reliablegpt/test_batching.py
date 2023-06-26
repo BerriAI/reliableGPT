@@ -1,7 +1,8 @@
+import main
 from main import batchRequests
 import openai
 
-openai.api_key = ""
+
 
 def simple_openai_call(prompt):
   print(f"in simple openai call with question:  {prompt}")

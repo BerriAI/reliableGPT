@@ -1,7 +1,7 @@
 import queue
 from concurrent.futures import ThreadPoolExecutor
 import threading
-from CustomQueue import CustomQueue
+from reliablegpt.custom_queue import CustomQueue
 
 class APICallHandler():
 

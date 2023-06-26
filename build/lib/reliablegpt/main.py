@@ -11,7 +11,7 @@ from tqdm import tqdm
 
 ## Import for Batch requests
 import uuid
-from APICallHandler import APICallHandler
+from reliablegpt.api_handler import APICallHandler
 import time
 import threading
 
@@ -220,25 +220,6 @@ class batchRequests:
         self.print_verbose(f"Gets result from reliableGPT: {result}",
                         end_time - start_time)
 
-    # def execute(self, questions=[]):
-    #     thread_list = []
-    #     results = []
-    #     print(f"ReliableGPT: Processing {len(questions)} Requests")
-
-    #     for idx, q in enumerate(questions):
-    #         self.api_handler.add_task()
-    #         thread = threading.Thread(target=self.get_result_threaded,
-    #                                 args=(q, results))
-    #     thread.start()
-    #     thread_list.append(thread)
-
-    #     # Join all threads
-    #     for thread in thread_list:
-    #         thread.join()
-
-    #     self.print_verbose("All threads completed.")
-    #     self.print_verbose(results)
-    #     return results
 
     def execute(self, questions=[]):
         for question in questions: 

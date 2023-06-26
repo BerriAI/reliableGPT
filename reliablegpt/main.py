@@ -11,7 +11,7 @@ from tqdm import tqdm
 
 ## Import for Batch requests
 import uuid
-from APICallHandler import APICallHandler
+from reliablegpt.api_handler import APICallHandler
 import time
 import threading
 
