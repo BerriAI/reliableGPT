@@ -1,11 +1,15 @@
 import openai
-from main import reliableGPT
-import main
+from reliablegpt import reliableGPT
+from tenacity import retry, stop_after_attempt, wait_random_exponential
+
 
 # make openAI reliable and safe
-#openai.ChatCompletion.create = reliableGPT(openai.ChatCompletion.create, user_email="krrish@berri.ai", user_token="rjPyk_xegdh-dpLBpDJzZacS0fVj3kR_zpNCnl5f4e0")
-openai.ChatCompletion.create = reliableGPT(openai.ChatCompletion.create, user_email= "ishaan@berri.ai", user_token = 'QA5T6lYfzB-8u3gFlC0hxtBZ-TbkJRF_FwrCB8GKTLM', send_notification=True)
+openai.ChatCompletion.create = reliableGPT(openai.ChatCompletion.create, user_email= "ishaan@berri.ai", user_token = "AxQgeB3aEDK2B3x4fNG3ZYJRvFfOfQuCTOR83Y_9y5g", send_notification=True)
+openai.Completion.create = reliableGPT(openai.Completion.create, user_email= "ishaan@berri.ai", user_token = "AxQgeB3aEDK2B3x4fNG3ZYJRvFfOfQuCTOR83Y_9y5g", send_notification=True)
+openai.Embedding.create = reliableGPT(openai.Embedding.create, user_email= "ishaan@berri.ai", user_token = "AxQgeB3aEDK2B3x4fNG3ZYJRvFfOfQuCTOR83Y_9y5g", send_notification=True)
 
+# openai.api_key = "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"
+openai.api_key = "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"
 
 def open_ai_completion_call():
     model = "gpt-4"
@@ -20,21 +24,34 @@ def open_ai_completion_call():
     print(response)
 
 
+@retry(wait=wait_random_exponential(min=1, max=20), stop=stop_after_attempt(6))
+def get_embedding(text, model="text-embedding-ada-002", metadata={}):
+  text = text.replace("\n", " ")
+  return openai.Embedding.create(input=[text],
+                                 model=model, metadata=metadata)["data"][0]["embedding"]
+
 def open_ai_embed_call():
-    openai.Embedding.create = reliableGPT(openai.Embedding.create, user_email= "ishaan@berri.ai", user_token = 'QA5T6lYfzB-8u3gFlC0hxtBZ-TbkJRF_FwrCB8GKTLM', send_notification=True)
-    openai.api_key = "bad-key"
-    text = "GM"
-    text = text.replace("\n", " ")
-    print("text")
+    # openai.Embedding.create = reliableGPT(openai.Embedding.create, user_email= "ishaan@berri.ai", user_token = 'QA5T6lYfzB-8u3gFlC0hxtBZ-TbkJRF_FwrCB8GKTLM', send_notification=True)
+    text = """
+    Write in less than 25 words a hyper contextualized message about your company and how what your company does could help the visiting company's product offering. Start the message with a lowercase letter.
+Reference previous successful chat conversations for the tone and voice. Mix up the language. Try saying something new to each visitor. Make sure it makes sense. Be as specific as possible. If you don't know the person or the company then write a funny
+joke based on the person's location. If you don't have the person's location then write a message based on the information of the page the person is on. If you know the person's company mention the person's company in the message. If you don't know the company
+then don't mention it. Take into account previous chat history and context around the company and the visitor. Do not include any urls in the response.
+At the very end of the message say "(not a bot btw, real person)". Speak succinctly as you would to your best friend.
+Your response to the visitor on the site should be as helpful as possible. If you know the company the person works for or the person's name, include the first name or company name in the message.
+If the person's name or company is not known, then start the message with "hey!" Craft the style of your message as the best sales development representative in the world would write.
+Do not say the same message twice to the person. Start the response with a lowercase letter. Do not start a new conversation or message the person if you've already messaged them within 72 hours.
+    """
     metadata = {
-        "instance_id" :"123",
-        "customer_uuid": "krrish@berri.ai"
+        "instance": 123, 
+        "user": "ishaan@berri.ai"
     }
-    embedding_request = openai.Embedding.create(input=[text], model="text-embedding-ada-002", metadata=metadata)
-    return embedding_request["data"][0]["embedding"]
+    embedding_result = get_embedding(text, metadata=metadata)
+    # print(embedding_result)
+    return embedding_result
 
 open_ai_embed_call()
-# fallback_priority = {user_emails}
+
 
 import concurrent.futures
 
@@ -80,7 +97,7 @@ def test_multiple_calls():
     else:
         print("Some calls returned errors.")
 
-#test_multiple_calls()
+test_multiple_calls()
 
 
 def test_single_call_bad_key():
@@ -114,7 +131,7 @@ def test_single_call_bad_key():
     else:
         print("Some calls returned errors.")
 
-# test_single_call_bad_key()
+test_single_call_bad_key()
 
 def krrish_test_key():
     openai.api_key = "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" 
