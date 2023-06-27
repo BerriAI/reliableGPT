@@ -131,5 +131,5 @@ delete_keys(user_email = user_email, user_token=token)
 You own your keys, and can delete them whenever you want. 
 
 ## Support 
-Reach out to us on Discord https://discord.com/invite/xqTmjKf9wC or Email us at ishaan@berri.ai & krrish@berri.ai
+Reach out to us on [Discord](https://discord.gg/WXFfTeEXRh) or Email us at ishaan@berri.ai & krrish@berri.ai
 
