@@ -14,6 +14,7 @@ setup(
         'klotty',
         'numpy',
         'posthog',
-        'tiktoken'
+        'tiktoken', 
+        'resend'
     ],
 )

@@ -8,11 +8,10 @@ import requests
 from posthog import Posthog
 from klotty import Klotty
 from tqdm import tqdm
-
+from alerting import Alerting
 ## Import for Batch requests
 import uuid
 from reliablegpt.api_handler import APICallHandler
-#from api_handler import APICallHandler
 
 import time
 import threading
@@ -22,6 +21,8 @@ client = Klotty(api_key="re_X1PBTBvD_5mJfFM98AuF2278fNAGfXVNV") # email client
 posthog = Posthog(
   project_api_key='phc_yZ30KsPzRXd3nYaET3VFDmquFKtMZwMTuFKVOei6viB',
   host='https://app.posthog.com')
+
+alerting = Alerting()
 
 def send_emails_task(user_email, notification_data, send_notification=False):
     if send_notification:
@@ -103,6 +104,7 @@ def handle_openAI_error(args, kwargs, openAI_error, fallback_strategy, graceful_
     error_type = None # defalt to being None
     if openAI_error != None and 'type' in openAI_error:
         error_type = openAI_error['type']
+
     if error_type == 'invalid_request_error' or error_type == 'InvalidRequestError':
         # check if this is context window related, try with a 16k model
         if openAI_error.code == 'context_length_exceeded':
@@ -170,6 +172,8 @@ def save_request(self, args, kwargs, posthog_event="", result="", posthog_metada
 
         if result == self.graceful_string or len(errors) == 2: # returns a graceful string or got a 2nd exception
             # send an email and alert
+            for error in errors:
+                alerting.add_error(error)
             send_emails_task(self.user_email, posthog_metadata, self.send_notification)
     except:
         return # safe function, should not impact error handling if logging fails
@@ -284,9 +288,9 @@ class reliableGPT:
         self.user_token = user_token
         self.send_notification = send_notification
         self.open_ai_limits = open_ai_limits
-
         if self.user_email == "":
             raise ValueError("ReliableGPT Error: Please pass in a user email")
+        alerting.add_emails(user_email)
 
 
     def handle_exception(self, args, kwargs, e):
@@ -308,6 +312,7 @@ class reliableGPT:
             print(colored(f"ReliableGPT: Recovered got a successful response {result}", "green"))
             if result == self.graceful_string:
                 # did a retry but still returned graceful string
+                print("returns graceful string")
                 save_request(
                     self, 
                     args, 
@@ -330,6 +335,7 @@ class reliableGPT:
                 )
         except Exception as e2:
             # Exception 2, After trying to rescue
+            print("gets 2nd error")
             save_request(
                 self, 
                 args, 
