@@ -4,6 +4,7 @@ import main
 from main import reliableGPT
 import openai
 
+
 openai.api_key = "gmmm" # give a bad key with no other alternatives
 openai.ChatCompletion.create = reliableGPT(openai.ChatCompletion.create, user_email= "ishaan@berri.ai", send_notification=True)
 

@@ -2,8 +2,6 @@ import main
 from main import RequestHandler
 import openai
 
-openai.api_key = "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"
-
 
 def simple_openai_call(prompt):
   print(f"in simple openai call with question:  {prompt}")
