@@ -179,6 +179,7 @@ class RequestHandler:
                process_func,
                max_token_capacity,
                max_request_capacity,
+               user_email,
                verbose=False):
         super().__init__()
         self.api_handler = APICallHandler(max_token_capacity,
@@ -186,6 +187,9 @@ class RequestHandler:
                                         verbose=verbose)
         self.process_func = process_func
         self.verbose = verbose
+        self.user_email = user_email
+        if user_email == "":
+            raise ValueError("Please enter a valid email")
 
     def print_verbose(self, *args):
         if self.verbose:
@@ -211,6 +215,7 @@ class RequestHandler:
     def execute(self, text, set_timeout=1200):
         task_id = uuid.uuid4().int
         self.print_verbose("task_id: ", task_id)
+        posthog.capture(self.user_email, "reliableGPT.RequestHandler.execute", {'question': text})
         self.api_handler.add_task(process_func=self.process_func,
                                 input=text,
                                 task_id=task_id)
@@ -252,6 +257,7 @@ class RequestHandler:
 
 
     def batch_process(self, questions=[], set_timeout=1200):
+        posthog.capture(self.user_email, "reliableGPT.RequestHandler.batch_process", {'questions': questions})
         for question in questions: 
             task_id = uuid.uuid4().int
             self.print_verbose("task_id: ", task_id)
