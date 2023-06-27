@@ -42,6 +42,7 @@ class Alerting:
   def add_emails(self, user_email):
     if type(user_email) == list:
        for email in user_email:
+          print(f"Adding email to list of emails {self.user_emails}")
           self.user_emails.add(email)
     else:
         self.user_emails.add(user_email)

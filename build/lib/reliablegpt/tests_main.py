@@ -6,9 +6,9 @@ openai.api_key = ""
 from tenacity import retry, stop_after_attempt, wait_random_exponential
 
 # make openAI reliable and safe
-openai.ChatCompletion.create = reliableGPT(openai.ChatCompletion.create, user_email= "ishaan@berri.ai", user_token = "AxQgeB3aEDK2B3x4fNG3ZYJRvFfOfQuCTOR83Y_9y5g", send_notification=True)
-openai.Completion.create = reliableGPT(openai.Completion.create, user_email= "ishaan@berri.ai", user_token = "AxQgeB3aEDK2B3x4fNG3ZYJRvFfOfQuCTOR83Y_9y5g", send_notification=True)
-openai.Embedding.create = reliableGPT(openai.Embedding.create, user_email= "ishaan@berri.ai", user_token = "AxQgeB3aEDK2B3x4fNG3ZYJRvFfOfQuCTOR83Y_9y5g", send_notification=True)
+openai.ChatCompletion.create = reliableGPT(openai.ChatCompletion.create, user_email= "ishaan@berri.ai", send_notification=True)
+openai.Completion.create = reliableGPT(openai.Completion.create, user_email= "ishaan@berri.ai", send_notification=True)
+openai.Embedding.create = reliableGPT(openai.Embedding.create, user_email= "ishaan@berri.ai", send_notification=True)
 
 def open_ai_completion_call():
     model = "gpt-4"

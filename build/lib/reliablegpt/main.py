@@ -9,10 +9,10 @@ from posthog import Posthog
 from klotty import Klotty
 from tqdm import tqdm
 
+from reliablegpt.alerting import Alerting
 ## Import for Batch requests
 import uuid
 from reliablegpt.api_handler import APICallHandler
-#from api_handler import APICallHandler
 
 import time
 import threading
@@ -23,16 +23,8 @@ posthog = Posthog(
   project_api_key='phc_yZ30KsPzRXd3nYaET3VFDmquFKtMZwMTuFKVOei6viB',
   host='https://app.posthog.com')
 
-def send_emails_task(user_email, notification_data, send_notification=False):
-    if send_notification:
-        body = f"""
-        Unhandled Error Data
-        {notification_data}
-        """
-        client.send_email(to=user_email,
-                        sender="krrish@berri.ai",
-                        subject="reliableGPT: Unhandled Error",
-                        html=body)
+alerting = Alerting()
+
 
 def make_LLM_request(new_kwargs, self):
     try:
@@ -170,7 +162,9 @@ def save_request(self, args, kwargs, posthog_event="", result="", posthog_metada
 
         if result == self.graceful_string or len(errors) == 2: # returns a graceful string or got a 2nd exception
             # send an email and alert
-            send_emails_task(self.user_email, posthog_metadata, self.send_notification)
+            for error in errors:
+                alerting.add_error(error)
+            # send_emails_task(self.user_email, posthog_metadata, self.send_notification)
     except:
         return # safe function, should not impact error handling if logging fails
 
@@ -271,7 +265,6 @@ class RequestHandler:
         return self.api_handler.get_results()
 
 
-
 class reliableGPT:
     def __init__(
             self, 
@@ -290,9 +283,18 @@ class reliableGPT:
         self.user_token = user_token
         self.send_notification = send_notification
         self.open_ai_limits = open_ai_limits
-
         if self.user_email == "":
             raise ValueError("ReliableGPT Error: Please pass in a user email")
+        
+        alerting.add_emails(user_email)
+
+        # after adding to alerting list then only use one email for tracking 
+        if type(self.user_email) == list:
+            if len(self.user_email) == 0:
+                raise ValueError("Please enter a valid email")
+            else:
+                self.user_email = self.user_email[0]
+            
 
 
     def handle_exception(self, args, kwargs, e):
@@ -314,6 +316,7 @@ class reliableGPT:
             print(colored(f"ReliableGPT: Recovered got a successful response {result}", "green"))
             if result == self.graceful_string:
                 # did a retry but still returned graceful string
+                print("returns graceful string")
                 save_request(
                     self, 
                     args, 
@@ -336,6 +339,7 @@ class reliableGPT:
                 )
         except Exception as e2:
             # Exception 2, After trying to rescue
+            print("gets 2nd error")
             save_request(
                 self, 
                 args, 

@@ -1,6 +1,12 @@
-import main
-from main import RequestHandler
+# this is a failing test to test our alerting 
+
+
+from reliablegpt import reliableGPT
 import openai
+
+
+openai.api_key = "gmmm" # give a bad key with no other alternatives
+openai.ChatCompletion.create = reliableGPT(openai.ChatCompletion.create, user_email= ["ishaan@berri.ai", "krrish@berri.ai"])
 
 
 def simple_openai_call(prompt):
@@ -35,15 +41,12 @@ list_questions = [
 ]
 
 
-request_handler = RequestHandler(process_func=simple_openai_call,
-                              max_token_capacity=40000,
-                              max_request_capacity=200,
-                              verbose=True)
+
 for question in list_questions:
   print("Making request")
   print(question)
   # async 
-  result = request_handler.execute(question)
+  result = simple_openai_call(question)
   print("response")
   print(result)
 

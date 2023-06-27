@@ -4,3 +4,4 @@ klotty
 numpy
 posthog
 tiktoken
+resend
