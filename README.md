@@ -40,7 +40,9 @@ openai.ChatCompletion.create = reliableGPT(openai.ChatCompletion.create, user_em
 # Advanced Usage 
 There's the default wrapper called `reliableGPT` - this handles errors thrown by individual queries. 
 
-ReliableGPT 💪 also handles issues like rate-limiting. We have another class `RequestHandler` for this. 
+There's another class `RequestHandler` - this handles the rate-limiting errors. 
+
+[👋 Give us feedback on how we could make this easier - Email us (krrish@berri.ai) or Text/Whatsapp us (+17708783106)].
 
 ### Breakdown of params
 #### reliableGPT
