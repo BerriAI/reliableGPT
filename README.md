@@ -10,6 +10,7 @@ reliableGPT handles:
 ## 👉 Code Examples
 * [reliableGPT Getting Started](https://colab.research.google.com/drive/1za1eU6EXLlW4UjHy_YYSc7veDeGTvLON?usp=sharing)
 * [reliableGPT (Advanced) OpenAI Key Manager](https://colab.research.google.com/drive/1xW-fTKjIQyVvhPLo5MWFCY7YlaMxBy_v?usp=sharing)
+* 🚨**NEW** [reliableGPT + GPT-4 Rate Limit Errors](https://colab.research.google.com/drive/1zFmhRbH46Blh7U1ymPSxUcstpMgT4ETX?usp=sharing)
 
 ![ezgif com-optimize](https://github.com/BerriAI/reliableGPT/assets/17561003/017046b0-0044-4df3-a740-d5edd9e23738)
 
@@ -21,6 +22,9 @@ Using your OpenAI keys across multiple servers - and just got one rotated? You c
 
 * **Context Window Errors**: 
 For context window errors it automatically retries your request with models with larger context windows
+
+* **Rate Limit Errors**: 
+We put your requests in a queue, and run parallel batches - while accounting for your OpenAI request + token limits (works with Langchain/LlamaIndex/Azure as well).
 
 # Getting Started
 ## Step 1. pip install package
@@ -34,7 +38,12 @@ openai.ChatCompletion.create = reliableGPT(openai.ChatCompletion.create, user_em
 ```
 
 # Advanced Usage 
+There's the default wrapper called `reliableGPT` - this handles errors thrown by individual queries. 
+
+ReliableGPT 💪 also handles issues like rate-limiting. We have another class `RequestHandler` for this. 
+
 ### Breakdown of params
+#### reliableGPT
 Here's everything you can pass to reliableGPT 
 
 | Parameter | Type | Required/Optional | Description |
@@ -44,6 +53,54 @@ Here's everything you can pass to reliableGPT
 | `fallback_strategy` | List | Optional | You can define a custom fallback strategy of OpenAI models you want to try using. If you want to try one model several times, then just repeat that e.g. ['gpt-4', 'gpt-4', 'gpt-3.5-turbo'] will try gpt-4 twice before trying gpt-3.5-turbo | 
 | `user_token`| string | Optional | Pass your user token if you want us to handle OpenAI Invalid Key Errors - we'll rotate through your stored keys (more on this below 👇) till we get one that works|
 
+#### RequestHandler
+Here's everything you can pass to RequestHandler 👇
+
+🚀 [Example Code](https://colab.research.google.com/drive/1zFmhRbH46Blh7U1ymPSxUcstpMgT4ETX?usp=sharing)
+
+| Parameter | Type | Required/Optional | Description |
+| --------- | ---- | ----------------- | ----------- |
+| `process_func`| function | Required | Your method to call openai. We'll pass your prompt to this method.|
+| `max_token_capacity`| int | Required | Your OpenAI max token rate limit for whichever model you're using |
+| `max_request_capacity`| int | Required | Your OpenAI max request rate limit for whichever model you're using |
+| `user_email`| string | Required | Update you on spikes in errors |
+
+## Handle **rate limits**
+### Step 1. Set your Max Token Capacity, Max Request capacity
+```python
+request_handler = reliablegpt.RequestHandler(process_func=simple_openai_call,
+                              max_token_capacity=40000,
+                              max_request_capacity=200,
+                              verbose=True) # optional set verbose = True
+```
+### Step 2. Run your questions through the RequestHandler
+The `RequestHandler` can handle batches of questions as well as individual questions 
+
+**Example running 9 questions using reliablegpt.RequestHandler**
+```python
+list_questions = [
+  "What is the difference between a list and a tuple in Python?",
+  "How do you iterate over a dictionary in Python?",
+  "What is the purpose of the 'self' parameter in a class method?",
+  "What are lambda functions in Python?",
+  "How do you remove duplicates from a list in Python?",
+  "What is the difference between append() and extend() methods in Python lists?",
+  "How do you read a file in Python?", "How do you write to a file in Python?",
+  "What is the difference between a shallow copy and a deep copy in Python?",
+  "How do you convert a string to lowercase in Python?"
+]
+
+results = request_handler.batch_process(list_questions)
+
+print("\n\n\n")
+print(f"Results from reliableGPT {results}")
+```
+
+**Example running individual questions**
+```python
+print(request_handler.execute("Who is ishaan"))
+print(request_handler.execute("Why is he the best CTO of BerriAI 🍇"))
+```
 ## Handle **rotated keys** 
 ### Step 1. Add your keys 
 ```python
