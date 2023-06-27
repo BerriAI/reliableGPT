@@ -1,7 +1,8 @@
 import main
-from main import batchRequests
+from main import RequestHandler
 import openai
 
+openai.api_key = "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"
 
 
 def simple_openai_call(prompt):
@@ -22,10 +23,6 @@ def simple_openai_call(prompt):
   return result
 
 
-batch_requests = batchRequests(process_func=simple_openai_call,
-                              max_token_capacity=40000,
-                              max_request_capacity=200,
-                              set_timeout=12000)
 
 list_questions = [
   "What is the difference between a list and a tuple in Python?",
@@ -39,7 +36,18 @@ list_questions = [
   "How do you convert a string to lowercase in Python?"
 ]
 
-results = batch_requests.execute(list_questions)
 
-print("\n\n\n")
-print(f"Results from reliableGPT {results}")
+request_handler = RequestHandler(process_func=simple_openai_call,
+                              max_token_capacity=40000,
+                              max_request_capacity=200,
+                              verbose=True)
+for question in list_questions:
+  print("Making request")
+  print(question)
+  # async 
+  result = request_handler.execute(question)
+  print("response")
+  print(result)
+
+# print("\n\n\n")
+# print(f"Results from reliableGPT {results}")

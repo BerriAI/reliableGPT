@@ -12,6 +12,8 @@ from tqdm import tqdm
 ## Import for Batch requests
 import uuid
 from reliablegpt.api_handler import APICallHandler
+#from api_handler import APICallHandler
+
 import time
 import threading
 
@@ -172,19 +174,17 @@ def save_request(self, args, kwargs, posthog_event="", result="", posthog_metada
     except:
         return # safe function, should not impact error handling if logging fails
 
-class batchRequests:
+class RequestHandler:
     def __init__(self,
                process_func,
                max_token_capacity,
                max_request_capacity,
-               set_timeout=10,
                verbose=False):
         super().__init__()
         self.api_handler = APICallHandler(max_token_capacity,
                                         max_request_capacity,
                                         verbose=verbose)
         self.process_func = process_func
-        self.set_timeout = set_timeout
         self.verbose = verbose
 
     def print_verbose(self, *args):
@@ -207,42 +207,58 @@ class batchRequests:
             return result
 
         return None
+
+    def execute(self, text, set_timeout=1200):
+        task_id = uuid.uuid4().int
+        self.print_verbose("task_id: ", task_id)
+        self.api_handler.add_task(process_func=self.process_func,
+                                input=text,
+                                task_id=task_id)
+
+        start_time = time.time()
+
+        while time.time() - start_time < set_timeout:
+            result = self.api_handler.get_result(task_id)
+            if result:
+                return result
+
+        return None
+
     
-    def get_request(self, question):
+    def get_request(self, question, set_timeout=1200):
         task_id = uuid.uuid4().int
         self.print_verbose("task_id: ", task_id)
         self.api_handler.add_task(process_func=self.process_func,
                                     input=question, task_id=task_id)
-        self.api_handler.set_upperbound(1) # just 1 question
+
         start_time = time.time() 
-        while time.time() - start_time < self.set_timeout:
+        while time.time() - start_time < set_timeout:
             results = self.api_handler.get_result(task_id=task_id)
             if results:
                 return results
-            return None
+        return None
 
     def get_results(self):
         return self.api_handler.get_results()
 
-    def get_result_threaded(self, test_question, results):
+    def get_result_threaded(self, test_question, results, set_timeout):
         self.print_verbose(f"Enters reliableGPT with question: {test_question}")
         start_time = time.time()
-        result = self.get_result(test_question)
+        result = self.get_result(test_question, set_timeout)
         results.append(result)
         end_time = time.time()
         self.print_verbose(f"Gets result from reliableGPT: {result}",
                         end_time - start_time)
 
 
-    def execute(self, questions=[]):
+    def batch_process(self, questions=[], set_timeout=1200):
         for question in questions: 
             task_id = uuid.uuid4().int
             self.print_verbose("task_id: ", task_id)
             self.api_handler.add_task(process_func=self.process_func,
                                         input=question, task_id=task_id)
-            self.api_handler.set_upperbound(len(questions))
         start_time = time.time() 
-        while time.time() - start_time < self.set_timeout:
+        while time.time() - start_time < set_timeout:
             results = self.api_handler.get_results()
             if len(results) >= len(questions):
                 return results
@@ -335,8 +351,6 @@ class reliableGPT:
             return result
         except Exception as e:
             return self.handle_exception(args, kwargs, e)
-
-
 
 
 ### OpenAI Key Management - Optional code if you want to use reliableGPT for Key Mgmt ###
