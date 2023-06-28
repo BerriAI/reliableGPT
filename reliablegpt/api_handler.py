@@ -2,11 +2,10 @@ import queue
 from concurrent.futures import ThreadPoolExecutor
 import threading
 from reliablegpt.custom_queue import CustomQueue
-
+from main import reliableGPT
 
 
 class APICallHandler():
-
   def __init__(self, max_token_capacity, max_request_capacity, verbose):
     super().__init__()
     self.verbose = verbose
@@ -40,8 +39,9 @@ class APICallHandler():
   def result_handler(self, result, task_id):
     self.results[task_id] = result
 
-  def process_item(self, function, argument, task_id):
-    result = function(argument)
+  def process_item(self, function, kwargs, task_id):
+    # wrap this around reliableGPT 
+    result = function(**kwargs)
     self.result_handler(result, task_id)
     return result
 

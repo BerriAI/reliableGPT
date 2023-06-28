@@ -31,16 +31,17 @@ def make_LLM_request(new_kwargs, self):
         if "embedding" in str(self.openai_create_function):
             # retry embedding with diff key
             print(colored(f"ReliableGPT: Retrying Embedding request", "blue"))
-            return openai.Embedding.create(**new_kwargs)
+            return self.original_open_ai_embeddings(**new_kwargs)
+   
         model = new_kwargs['model']
         if "3.5" or "4" in model: # call ChatCompletion
-            print(colored(f"ReliableGPT: Retrying request with model CHAT {model}", "blue"))
-            return openai.ChatCompletion.create(**new_kwargs)
+            print(colored(f"ReliableGPT: Retrying request with model CHAT {model} {new_kwargs}", "blue"))
+            return self.original_open_ai_chat(**new_kwargs)
         else:
             print(colored(f"ReliableGPT: Retrying request with model TEXT {model}", "blue"))
             new_kwargs['prompt'] = " ".join([message["content"] for message in new_kwargs['messages']])
             new_kwargs.pop('messages', None) # remove messages for completion models 
-            return openai.Completion.create(**new_kwargs)
+            return self.original_open_ai_completion(**new_kwargs)
     except Exception as e:
         print(colored(f"ReliableGPT: Got 2nd AGAIN Error {e}", "red"))
         raise ValueError(e)
@@ -223,12 +224,13 @@ class RequestHandler:
 
         return None
 
-    
-    def get_request(self, question, set_timeout=1200):
+    def get_request(self, kwargs, set_timeout=1200):
+        print("in Get requests for Queue")
         task_id = uuid.uuid4().int
         self.print_verbose("task_id: ", task_id)
+        # self.process_func = reliableGPT(self.process_func, user_email="ishaan@berri.ai")
         self.api_handler.add_task(process_func=self.process_func,
-                                    input=question, task_id=task_id)
+                                    input=kwargs, task_id=task_id)
 
         start_time = time.time() 
         while time.time() - start_time < set_timeout:
@@ -274,15 +276,23 @@ class reliableGPT:
             user_email="", 
             user_token="",
             send_notification=False,
-            open_ai_limits={}
+            max_token_capacity=40000,
+            max_request_capacity=200,
+            queue_requests  = False
             ):
+        self.original_open_ai_chat = openai.ChatCompletion.create
+        self.original_open_ai_completion = openai.Completion.create
+        self.original_open_ai_embeddings = openai.Embedding.create
+        self.orignal_open_ai_reference = openai_create_function
         self.openai_create_function = openai_create_function
         self.graceful_string = graceful_string
         self.fallback_strategy = fallback_strategy
         self.user_email = user_email
         self.user_token = user_token
         self.send_notification = send_notification
-        self.open_ai_limits = open_ai_limits
+        self.max_token_capacity = max_token_capacity
+        self.max_request_capacity = max_request_capacity
+        self.queue = queue_requests
         if self.user_email == "":
             raise ValueError("ReliableGPT Error: Please pass in a user email")
         
@@ -294,14 +304,20 @@ class reliableGPT:
                 raise ValueError("Please enter a valid email")
             else:
                 self.user_email = self.user_email[0]
-            
-
+        self.request_handler = None
+        if self.queue:
+            print("INIT queue requests")
+            self.request_handler = RequestHandler(process_func=self.openai_create_function,
+                                        max_token_capacity=max_token_capacity,
+                                        user_email=self.user_email,
+                                        max_request_capacity=max_request_capacity,
+                                        verbose=True)
 
     def handle_exception(self, args, kwargs, e):
         result = self.graceful_string # default to graceful string
         try:
             # Attempt No. 1, exception is received from OpenAI 
-            print(colored(f"ReliableGPT: Error Response from {self.openai_create_function}", 'red'))
+            print(colored(f"ReliableGPT: Error Response from {self.openai_create_function} {kwargs}", 'red'))
             print(colored(f"ReliableGPT: Got Exception {e}", 'red'))
             result = handle_openAI_error(
                 args = args,
@@ -355,9 +371,16 @@ class reliableGPT:
     ## Code that handles / wraps openai calls
     def __call__(self, *args, **kwargs):
         try:
-            save_request(self, args, kwargs, "reliableGPT.request", result="")
-            result = self.openai_create_function(*args, **kwargs)
-            save_request(self, args, kwargs, "", result=result)
+            if self.queue:
+
+                save_request(self, args, kwargs, "reliableGPT.queue.request", result="")
+                result = self.request_handler.get_request(kwargs)
+                save_request(self, args, kwargs, "", result=result)
+            else:
+                print("none q requests")
+                save_request(self, args, kwargs, "reliableGPT.request", result="")
+                result = self.openai_create_function(*args, **kwargs)
+                save_request(self, args, kwargs, "", result=result)
             return result
         except Exception as e:
             return self.handle_exception(args, kwargs, e)
