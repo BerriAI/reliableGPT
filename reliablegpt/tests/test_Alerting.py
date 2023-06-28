@@ -1,12 +1,13 @@
-# this is a failing test to test our alerting 
+import sys
+sys.path.append('..')
 
-import main
 from main import reliableGPT
 import openai
 
 
-openai.api_key = "gmmm" # give a bad key with no other alternatives
-openai.ChatCompletion.create = reliableGPT(openai.ChatCompletion.create, user_email= "ishaan@berri.ai", send_notification=True)
+openai.api_key = "gmmm"  # give a bad key with no other alternatives
+openai.ChatCompletion.create = reliableGPT(openai.ChatCompletion.create,
+                                      user_email=["krrish@berri.ai", "ishaan@berri.ai"])
 
 
 def simple_openai_call(prompt):
@@ -27,7 +28,6 @@ def simple_openai_call(prompt):
   return result
 
 
-
 list_questions = [
   "What is the difference between a list and a tuple in Python?",
   "How do you iterate over a dictionary in Python?",
@@ -40,12 +40,10 @@ list_questions = [
   "How do you convert a string to lowercase in Python?"
 ]
 
-
-
 for question in list_questions:
   print("Making request")
   print(question)
-  # async 
+  # async
   result = simple_openai_call(question)
   print("response")
   print(result)
