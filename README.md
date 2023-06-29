@@ -56,7 +56,6 @@ openai.ChatCompletion.create = reliableGPT(
 [👋 Give us feedback on how we could make this easier - Email us (krrish@berri.ai) or Text/Whatsapp us (+17708783106)].
 
 ### Breakdown of params
-#### reliableGPT
 Here's everything you can pass to reliableGPT 
 
 | Parameter | Type | Required/Optional | Description |
