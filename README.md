@@ -63,57 +63,12 @@ Here's everything you can pass to reliableGPT
 | `openai.ChatCompletion.create`| OpenAI method| Required | This is a method from OpenAI, used for calling the OpenAI chat endpoints|
 | `user_email`| string/list | Required | Update you on spikes in errors. You can either set user_email to one email (as user_email = "ishaan@berri.ai") or multiple (as user_email = ["ishaan@berri.ai", "krrish@berri.ai"] if you want to send alerts to multiple emails |
 | `fallback_strategy` | list | Optional | You can define a custom fallback strategy of OpenAI models you want to try using. If you want to try one model several times, then just repeat that e.g. ['gpt-4', 'gpt-4', 'gpt-3.5-turbo'] will try gpt-4 twice before trying gpt-3.5-turbo | 
+| `queue_requests`| bool | Optional | Set to True if you want to handle rate limit errors using a request queuing mechanism |
+| `model_limits_dir`| dict | Optional | Note: Required if using `queue_requests = True`, For models you want to handle rate limits for set model_limits_dir = {"gpt-3.5-turbo": {"max_token_capacity": 1000000, "max_request_capacity": 10000}} You can find your account rate limits here: https://platform.openai.com/account/rate-limits |
 | `user_token`| string | Optional | Pass your user token if you want us to handle OpenAI Invalid Key Errors - we'll rotate through your stored keys (more on this below 👇) till we get one that works|
-
-#### Advanced Usage - Queue Requests for Token & Request Limits 
-### Guaranteed responses from Azure + OpenAI GPT-4, GPT 3.5 Turbo - Handle Rate Limit Errors
-Here's everything you can pass to RequestHandler 👇
 
 🚀 [Example Code](https://colab.research.google.com/drive/1zFmhRbH46Blh7U1ymPSxUcstpMgT4ETX?usp=sharing)
 
-| Parameter | Type | Required/Optional | Description |
-| --------- | ---- | ----------------- | ----------- |
-| `process_func`| function | Required | Your method to call openai. We'll pass your prompt to this method.|
-| `max_token_capacity`| int | Required | Your OpenAI max token rate limit for whichever model you're using |
-| `max_request_capacity`| int | Required | Your OpenAI max request rate limit for whichever model you're using |
-| `user_email`| string | Required | Update you on spikes in errors |
-
-## Handle **rate limits**
-### Step 1. Set your Max Token Capacity, Max Request capacity
-```python
-request_handler = reliablegpt.RequestHandler(process_func=simple_openai_call,
-                              max_token_capacity=40000,
-                              max_request_capacity=200,
-                              verbose=True) # optional set verbose = True
-```
-### Step 2. Run your questions through the RequestHandler
-The `RequestHandler` can handle batches of questions as well as individual questions 
-
-**Example running 9 questions using reliablegpt.RequestHandler**
-```python
-list_questions = [
-  "What is the difference between a list and a tuple in Python?",
-  "How do you iterate over a dictionary in Python?",
-  "What is the purpose of the 'self' parameter in a class method?",
-  "What are lambda functions in Python?",
-  "How do you remove duplicates from a list in Python?",
-  "What is the difference between append() and extend() methods in Python lists?",
-  "How do you read a file in Python?", "How do you write to a file in Python?",
-  "What is the difference between a shallow copy and a deep copy in Python?",
-  "How do you convert a string to lowercase in Python?"
-]
-
-results = request_handler.batch_process(list_questions)
-
-print("\n\n\n")
-print(f"Results from reliableGPT {results}")
-```
-
-**Example running individual questions**
-```python
-print(request_handler.execute("Who is ishaan"))
-print(request_handler.execute("Why is he the best CTO of BerriAI 🍇"))
-```
 ## Handle **rotated keys** 
 ### Step 1. Add your keys 
 ```python
