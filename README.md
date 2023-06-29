@@ -37,8 +37,15 @@ from reliablegpt import reliableGPT
 openai.ChatCompletion.create = reliableGPT(openai.ChatCompletion.create, user_email='ishaan@berri.ai')
 ```
 
-# Advanced Usage - Queue Requests for Token & Request Limits 
-## Guaranteed responses from Azure + OpenAI GPT-4, GPT 3.5 Turbo - Handle Rate Limit Errors
+## Advanced Usage - Queue Requests for Token & Request Limits 
+### Guaranteed responses from Azure + OpenAI GPT-4, GPT 3.5 Turbo - Handle Rate Limit Errors
+Use `queue_requests=True` and set your token limits as ` model_limits_dir = {"gpt-3.5-turbo": {"max_token_capacity": 1000000, "max_request_capacity": 10000}` You can find your account rate limits here: https://platform.openai.com/account/rate-limits
+
+Here's an example request using queing to handle rate limits  
+```python
+from reliablegpt import reliableGPT
+openai.ChatCompletion.create = reliableGPT(openai.ChatCompletion.create, user_email='ishaan@berri.ai')
+```
 
 [👋 Give us feedback on how we could make this easier - Email us (krrish@berri.ai) or Text/Whatsapp us (+17708783106)].
 
