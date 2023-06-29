@@ -37,10 +37,8 @@ from reliablegpt import reliableGPT
 openai.ChatCompletion.create = reliableGPT(openai.ChatCompletion.create, user_email='ishaan@berri.ai')
 ```
 
-# Advanced Usage 
-There's the default wrapper called `reliableGPT` - this handles errors thrown by individual queries. 
-
-There's another class `RequestHandler` - this handles the rate-limiting errors. 
+# Advanced Usage - Queue Requests for Token & Request Limits 
+## Guaranteed responses from Azure + OpenAI GPT-4, GPT 3.5 Turbo - Handle Rate Limit Errors
 
 [👋 Give us feedback on how we could make this easier - Email us (krrish@berri.ai) or Text/Whatsapp us (+17708783106)].
 
