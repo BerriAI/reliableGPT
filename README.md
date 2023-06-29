@@ -43,8 +43,13 @@ Use `queue_requests=True` and set your token limits as ` model_limits_dir = {"gp
 
 Here's an example request using queing to handle rate limits  
 ```python
-from reliablegpt import reliableGPT
-openai.ChatCompletion.create = reliableGPT(openai.ChatCompletion.create, user_email='ishaan@berri.ai')
+openai.ChatCompletion.create = reliableGPT(
+  openai.ChatCompletion.create, 
+  user_email= ["ishaan@berri.ai", "krrish@berri.ai"], 
+  queue_requests=True,
+  model_limits_dir = {"gpt-3.5-turbo": {"max_token_capacity": 1000000, "max_request_capacity": 10000}},
+  fallback_strategy=['gpt-3.5-turbo', 'text-davinci-003', 'gpt-3.5-turbo']
+)
 ```
 
 [👋 Give us feedback on how we could make this easier - Email us (krrish@berri.ai) or Text/Whatsapp us (+17708783106)].
