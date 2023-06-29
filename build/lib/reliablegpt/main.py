@@ -1,4 +1,4 @@
-# Prod Imports
+# # Prod Imports
 from reliablegpt.IndividualRequest import IndividualRequest
 from reliablegpt.RateLimitHandler import RateLimitHandler
 from reliablegpt.Model import Model
@@ -49,7 +49,9 @@ def reliableGPT(openai_create_function,
            user_token="",
            send_notification=True,
            model_limits_dir={},
-           queue_requests=False):
+           backup_openai_key=None,
+           queue_requests=False, 
+           verbose=False):
   """Determine if an instantiation is calling the rate limit handler or the individual request wrapper directly and return the correct object"""
 
   primary_email = ""  # which api key management is mapped to
@@ -74,7 +76,9 @@ def reliableGPT(openai_create_function,
                              user_email=primary_email,
                              user_token=user_token,
                              logging_fn=save_request,
-                             send_notification=send_notification)
+                             send_notification=send_notification,
+                             backup_openai_key=backup_openai_key, 
+                             verbose=verbose)
   elif queue_requests == True:
     max_token_capacity = 40000
     max_request_capacity = 200

@@ -13,8 +13,8 @@ import concurrent.futures
 
 openai.ChatCompletion.create = reliableGPT(
   openai.ChatCompletion.create,
-  user_email="krrish@berri.ai",
-  fallback_strategy=["text-davinci-003", "text-davinci-003"])
+  user_email="krrish@berri.ai", verbose=True)
+
 print(openai.ChatCompletion.create)
 
 good_open_ai_api_key = os.getenv('OPENAI_API_KEY')
@@ -191,3 +191,4 @@ def test_multiple_calls():
 
 
 #test_multiple_calls()
+
