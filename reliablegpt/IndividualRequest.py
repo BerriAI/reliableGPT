@@ -1,9 +1,11 @@
 from termcolor import colored
 import requests
 import copy
-import openai
 import posthog
-
+import importlib
+import openai
+from openai import ChatCompletion
+import traceback
 
 class IndividualRequest:
   """A brief description of the class."""
@@ -19,6 +21,7 @@ class IndividualRequest:
                user_token="",
                send_notification=False,
                logging_fn=None,
+               backup_openai_key="",
                verbose=False):
     # Initialize instance variables
     self.model = model
@@ -29,6 +32,7 @@ class IndividualRequest:
     self.user_email = user_email
     self.user_token = user_token
     self.save_request = logging_fn
+    self.backup_openai_key = backup_openai_key
 
     self.print_verbose(f"INIT fallback strategy {self.fallback_strategy}")
 
@@ -41,6 +45,7 @@ class IndividualRequest:
     try:
       self.print_verbose(f"calling model function: {self.model_function}")
       self.print_verbose(f"these are the kwargs: {kwargs}")
+      self.print_verbose(f"this is the openai api base: {openai.api_base}")
       result = self.model_function(*args, **kwargs)
       self.print_verbose(f"This is the result: {str(result)[:500]}")
       return result
@@ -49,20 +54,45 @@ class IndividualRequest:
       return self.handle_exception(args, kwargs, e)
 
   def fallback_request(self, args, kwargs, fallback_strategy):
-    result = None
-    for model in fallback_strategy:
+    try: 
+      self.print_verbose("In fallback request")
+      result = None
       new_kwargs = copy.deepcopy(kwargs)  # Create a deep copy of kwargs
-      new_kwargs['model'] = model  # Update the model
-      result = self.make_LLM_request(new_kwargs)
-      if result != None:
-        return result
-    return None
+      if self.backup_openai_key and len(self.backup_openai_key) > 0: # user passed in a backup key for the raw openai endpoint
+        # switch to the raw openai model instead of using azure. 
+        new_kwargs["openai2"] = openai.__dict__.copy() # preserve the azure endpoint details
+        if "Embedding" in str(self.model_function):
+          fallback_strategy = ["text-embedding-ada-002"]
+
+      for model in fallback_strategy:
+        new_kwargs['model'] = model  # Update the model
+        result = self.make_LLM_request(new_kwargs)
+        if result != None:
+          return result
+      return None
+    except:
+      self.print_verbose(traceback.format_exc())
+      return None
 
   def make_LLM_request(self, new_kwargs):
     embedding_model = self.model.get_original_embeddings()
     chat_model = self.model.get_original_chat()
     completion_model = self.model.get_original_completion()
     try:
+      self.print_verbose(f"{new_kwargs.keys()}")
+      if "openai2" in new_kwargs:
+        openai.api_type = "openai"
+        openai.api_base = "https://api.openai.com/v1"
+        openai.api_version = None
+        openai.api_key = self.backup_openai_key
+        new_kwargs_except_openai_attributes = {k: v for k, v in new_kwargs.items() if k != "openai2"}
+        new_kwargs_except_engine = {k: v for k, v in new_kwargs_except_openai_attributes.items() if k != "engine"}
+        completion = self.model_function(**new_kwargs_except_engine)
+        openai.api_type = new_kwargs["openai2"]["api_type"]
+        openai.api_base = new_kwargs["openai2"]["api_base"]
+        openai.api_version = new_kwargs["openai2"]["api_version"]
+        openai.api_key = new_kwargs["openai2"]["api_key"]
+        return completion
       if "embedding" in str(self.model_function):
         # retry embedding with diff key
         print(colored(f"ReliableGPT: Retrying Embedding request", "blue"))
