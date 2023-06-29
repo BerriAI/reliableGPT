@@ -24,7 +24,7 @@ Using your OpenAI keys across multiple servers - and just got one rotated? You c
 For context window errors it automatically retries your request with models with larger context windows
 
 * **Rate Limit Errors**: 
-We put your requests in a queue, and run parallel batches - while accounting for your OpenAI request + token limits (works with Langchain/LlamaIndex/Azure as well).
+Set `queue_requests=True` and We put your requests in a queue, and run parallel batches - while accounting for your OpenAI or Azure OpenAI request + token limits (works with Langchain/LlamaIndex/Azure as well).
 
 # Getting Started
 ## Step 1. pip install package
@@ -32,6 +32,7 @@ We put your requests in a queue, and run parallel batches - while accounting for
 pip install reliableGPT
 ```
 ## Step 2. The core package is 1 line of code
+Integrating with OpenAI, Azure OpenAI, Langchain, LlamaIndex
 ```python
 from reliablegpt import reliableGPT
 openai.ChatCompletion.create = reliableGPT(openai.ChatCompletion.create, user_email='ishaan@berri.ai')
