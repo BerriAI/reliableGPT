@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='reliableGPT',
-    version='0.2.953',
+    version='0.2.954',
     description='Error handling and auto-retry library for GPT',
     author='Ishaan Jaffer',
     packages=[
@@ -15,6 +15,12 @@ setup(
         'numpy',
         'posthog',
         'tiktoken',
-        'resend'
+        'resend', 
+        "langchain",
+        "pypdf",
+        "pymupdf",
+        "pdfminer",
+        "pdfminer.six",
+        "unstructured"
     ],
 )
