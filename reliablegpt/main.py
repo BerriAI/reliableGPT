@@ -2,13 +2,14 @@
 from reliablegpt.IndividualRequest import IndividualRequest
 from reliablegpt.RateLimitHandler import RateLimitHandler
 from reliablegpt.Model import Model
-from reliablegpt.Alerting import Alerting
+from reliablegpt.alerting import Alerting
+from reliablegpt.reliableQuery import reliable_query
 
 # # Dev Imports
 # from IndividualRequest import IndividualRequest
 # from RateLimitHandler import RateLimitHandler
 # from Model import Model
-# from Alerting import Alerting
+# from alerting import Alerting
 
 from posthog import Posthog
 
@@ -26,7 +27,6 @@ def save_request(user_email,
                  posthog_metadata={},
                  errors=[]):
   try:
-    #metadata  = kwargs['metadata']
     if posthog_event != "":
       posthog.capture(user_email, posthog_event,
                       posthog_metadata)  # save posthog event
@@ -84,9 +84,9 @@ def reliableGPT(openai_create_function,
     max_request_capacity = 200
     ## [TODO]: Allow handling multiple model types (gpt-3.5-turbo AND gpt-4)
     if model_limits_dir and isinstance(model_limits_dir, dict):
-      keys = model_limits_dir.keys()
+      keys = list(model_limits_dir.keys())
       max_token_capacity = model_limits_dir[keys[0]]["max_token_capacity"]
-      max_request_capacity = model_limits_dir["max_request_capacity"]
+      max_request_capacity = model_limits_dir[keys[0]]["max_request_capacity"]
 
     return RateLimitHandler(model,
                             fallback_strategy=fallback_strategy,

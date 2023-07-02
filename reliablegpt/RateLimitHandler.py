@@ -6,7 +6,7 @@ import traceback
 
 ## Dev Imports 
 # from IndividualRequest import IndividualRequest
-# from RateLimitHandler_helpers.APICallHandler import APICallHandler
+# from APICallHandler import APICallHandler
 
 ## Prod Imports
 from reliablegpt.IndividualRequest import IndividualRequest

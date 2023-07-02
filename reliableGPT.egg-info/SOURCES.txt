@@ -17,3 +17,4 @@ reliablegpt/ReliableDataLoaders.py
 reliablegpt/__init__.py
 reliablegpt/alerting.py
 reliablegpt/main.py
+reliablegpt/reliableQuery.py
