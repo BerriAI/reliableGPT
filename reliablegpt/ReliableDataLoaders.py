@@ -11,16 +11,6 @@ import requests
 import os
 from uuid import uuid4
 from urllib.parse import urlparse
-import nltk
-
-def setup_nltk():
-    print("calling setup nltk")
-    try:
-        nltk.data.find('tokenizers/punkt')
-    except LookupError:
-        nltk.download('punkt')
-
-setup_nltk()
 
 pdf_modules = [
   PyMuPDFLoader, PDFMinerLoader, PyPDFLoader, OnlinePDFLoader
@@ -71,28 +61,31 @@ class reliableData:
   def send_alert(self, error_type, filepath=None, web_url=None, additional_args=None):
     print(colored("Sending alert", "magenta"))
     # save the file
+    print(f"params: {error_type}, {filepath}, {web_url}, {additional_args}")
     file_url = "" 
-    if filepath:
-        file_extension = os.path.splitext(filepath)[1]
-        filename = str(uuid4()) + file_extension
-        print(filename)
-        querystring = {
+    if filepath and isinstance(filepath, str) and os.path.exists(filepath):
+      print("INSIDE FILEPATH")
+      file_extension = os.path.splitext(filepath)[1]
+      filename = str(uuid4()) + file_extension
+      print(filename)
+      querystring = {
         "filename": filename,
-        }
+      }
 
-        post_request = requests.post(
-            url='https://reliablegpt-logging-server-7nq8.zeet-berri.zeet.app/write_file',
-            params=querystring,
-            files={
-                'file': open(filepath, 'rb')
-            },
-        )
-        
-        # Get the response
-        response = post_request.json()
-        print("response: ", response)
-        file_url = response["response"]
+      post_request = requests.post(
+          url='https://reliablegpt-logging-server-7nq8.zeet-berri.zeet.app/write_file',
+          params=querystring,
+          files={
+              'file': open(filepath, 'rb')
+          },
+      )
+      
+      # Get the response
+      response = post_request.json()
+      print("response: ", response)
+      file_url = response["response"]
     
+    print("before HTML")
     html = """
         <p><strong>ReliableGPT Error:</strong></p>
         <p>A critical error occurred that ReliableGPT was unable to handle.</p>
@@ -100,6 +93,7 @@ class reliableData:
         <p><strong>{}</strong></p>
         """.format(self.customer_email, error_type)
 
+    print(f"html: {html}")
     if len(file_url) > 0:
       html += """<p> Here is the <a href={}>file</a> which caused the error</p>""".format(file_url)
 
@@ -123,6 +117,7 @@ class reliableData:
       "subject": "reliableGPT 💪: {} - Unhandled Ingestion Error ".format(self.customer_email),
       "html": html
     }
+    print(params)
 
     for user_email in self.user_emails:
       params["to"] = user_email
@@ -132,45 +127,58 @@ class reliableData:
 
   def exceptionHandler(self, error_description, filepath=None, web_url=None):
     pages = []
-    if filepath:
-        if "pdf" in filepath.lower():
-            print("inside pdf filepath")
-            for module in pdf_modules:
-                try:
-                    print(f"module: {module}")
-                    loader = module(filepath)
-                    print(f"loader: {loader}")
-                    pages = loader.load_and_split(self.text_splitter)
-                    print(f"pages: {pages}")
-                    if len(pages) > 0: # it worked!
-                        break
-                except:
-                    # traceback.print_exc()
-                    pass
-        elif "csv" in filepath.lower():
-            for module in csv_modules:
-                try:
-                    loader = module(filepath)
-                    pages = loader.load_and_split(self.text_splitter)
-                    if len(pages) > 0: # it worked!
-                        break
-                except:
-                    pass
-    elif web_url:
-       url = self.fix_malformed_url(web_url)
-       print("url: ", url)
-       try:
-        loader = UnstructuredURLLoader(urls=[url])
-        pages = loader.load_and_split(self.text_splitter)
-       except: 
-        traceback.print_exc()
-        pass
-          
-    if len(pages) == 0 and self.customer_email in self.priority_customer_list:
-      if filepath:
-        self.send_alert(error_type=error_description, filepath=filepath)
+    additional_args = None
+    try: 
+      if filepath and os.path.exists(filepath):
+          if "pdf" in filepath.lower():
+              for module in pdf_modules:
+                  try:
+                      loader = module(filepath)
+                      pages = loader.load_and_split(self.text_splitter)
+                      if len(pages) > 0: # it worked!
+                          break
+                  except:
+                      pass
+          elif "csv" in filepath.lower():
+              for module in csv_modules:
+                  try:
+                      loader = module(filepath)
+                      pages = loader.load_and_split(self.text_splitter)
+                      if len(pages) > 0: # it worked!
+                          break
+                  except:
+                      pass
       elif web_url:
-        self.send_alert(error_type=error_description, web_url=web_url)
+        url = self.fix_malformed_url(web_url)
+        try:
+          loader = UnstructuredURLLoader(urls=[url])
+          pages = loader.load_and_split(self.text_splitter)
+        except: 
+          pass
       else:
-        self.send_alert(error_type=error_description)
+        additional_args = "Neither a valid filepath nor a web url were passed"
+    except:
+       additional_args = "Neither a valid filepath nor a web url were passed"
+       pass
+          
+    if len(pages) == 0: # alert user
+      if filepath:
+        self.send_alert(error_type=error_description, filepath=filepath, additional_args=additional_args)
+      elif web_url:
+        self.send_alert(error_type=error_description, web_url=web_url, additional_args=additional_args)
+      else:
+        self.send_alert(error_type=error_description, additional_args=additional_args)
     return pages
+  
+  def reliableDataLoaders(self, ingest_func, filepath, web_url):
+    try:
+       response = ingest_func
+       if response == None or (isinstance(ingest_func, list) and len(ingest_func) == 0):
+          # retry 
+          updated_response = self.exceptionHandler("error in your ingestion function", filepath=filepath, web_url=web_url)
+          if len(updated_response) == 0: # if we're not able to fix it, just return the original response
+              raise Exception()
+          return updated_response
+    except:
+       return ingest_func
+    return ingest_func
