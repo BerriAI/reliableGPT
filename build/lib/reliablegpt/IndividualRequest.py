@@ -46,6 +46,15 @@ class IndividualRequest:
       self.print_verbose(f"calling model function: {self.model_function}")
       self.print_verbose(f"these are the kwargs: {kwargs}")
       self.print_verbose(f"this is the openai api base: {openai.api_base}")
+      try:
+        # this should never block running the openai call
+        self.save_request(
+            user_email=self.user_email,
+            graceful_string=self.graceful_string,
+            posthog_event='reliableGPT.request',
+        )
+      except:
+        print("ReliableGPT error occured during saving request")
       result = self.model_function(*args, **kwargs)
       self.print_verbose(f"This is the result: {str(result)[:500]}")
       return result
