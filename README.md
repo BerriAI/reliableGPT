@@ -68,6 +68,28 @@ Here's everything you can pass to reliableGPT
 | `user_token`| string | Optional | Pass your user token if you want us to handle OpenAI Invalid Key Errors - we'll rotate through your stored keys (more on this below 👇) till we get one that works|
 | `backup_openai_key`| string | Optional | Pass your OpenAI API key if you're using Azure and want to switch to OpenAI in case your requests start failing |
 
+## Track LLM Server Dropped Requests, Errors
+Use reliableGPT to track Incoming Requests, Dropped Requests - Timeout Requests + Error Requests 
+
+In order to get started add the `@reliable_query` decorator to your query endpoint on your App server, ensure to pass in your user_email to access your logs, your logs will be available at https://berri-sentry.vercel.app/<your user_email>
+
+```
+from reliablegpt import reliable_query
+
+@app.route("/berri_query")
+@reliable_query(user_email='ishaan@berri.ai')
+def berri_query():
+  print('Request receieved: ', request) 
+  # parse input params
+  query = request.args.get("query")
+
+```
+View of the reliableGPT dashboard at: https://berri-sentry.vercel.app
+<img width="1280" alt="Screenshot 2023-07-01 at 8 00 49 PM" src="https://github.com/BerriAI/reliableGPT/assets/29436595/49ff18b6-513e-40cf-a73f-a59242478440">
+
+
+
+
 ## Handle **rotated keys** 
 ### Step 1. Add your keys 
 ```python
