@@ -13,6 +13,7 @@ reliablegpt/CustomQueue.py
 reliablegpt/IndividualRequest.py
 reliablegpt/Model.py
 reliablegpt/RateLimitHandler.py
+reliablegpt/ReliableDataLoaders.py
 reliablegpt/__init__.py
 reliablegpt/alerting.py
 reliablegpt/main.py
