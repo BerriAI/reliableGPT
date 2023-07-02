@@ -68,6 +68,31 @@ Here's everything you can pass to reliableGPT
 | `user_token`| string | Optional | Pass your user token if you want us to handle OpenAI Invalid Key Errors - we'll rotate through your stored keys (more on this below 👇) till we get one that works|
 | `backup_openai_key`| string | Optional | Pass your OpenAI API key if you're using Azure and want to switch to OpenAI in case your requests start failing |
 
+## Reliable Data Loaders
+Use reliableGPT for retry + alerting on langchain data loaders.
+* Fix + retry malformed urls
+* Retry different data loaders for PDFs and CSVs
+* Get email alerts w/ failing file/url if there's still errors
+
+Here's an example:
+```
+from reliablegpt import reliableData
+# initialize your langchain text splitter
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+text_splitter = RecursiveCharacterTextSplitter(chunk_size=3000,
+                                               chunk_overlap=200,
+                                               length_function=len)
+
+# initialize reliableData object. Pass in your email, any metadata you want to receive in your email alerts, and your initialized langchain text splitter
+rDL = reliableData(user_emails=["krrish@berri.ai"], metadata={"environment": "local"}, text_splitter=text_splitter)
+
+# identify the impacted user (can be email/id/etc.)
+rDL.set_user("ishaan@berri.ai")
+
+# just wrap your ingestion function with ReliableDataLoaders 
+chunks = rDL.reliableDataLoaders(ingest(file, api_url, input_url), filepath="data/" + file.filename, web_url=input_url)
+```
+
 ## Track LLM Server Dropped Requests, Errors
 Use reliableGPT to track Incoming Requests, Dropped Requests - Timeout Requests + Error Requests 
 
@@ -86,8 +111,6 @@ def berri_query():
 ```
 View of the reliableGPT dashboard at: https://berri-sentry.vercel.app
 <img width="1280" alt="Screenshot 2023-07-01 at 8 00 49 PM" src="https://github.com/BerriAI/reliableGPT/assets/29436595/49ff18b6-513e-40cf-a73f-a59242478440">
-
-
 
 
 ## Handle **rotated keys** 
