@@ -109,7 +109,9 @@ def berri_query():
   query = request.args.get("query")
 
 ```
-View of the reliableGPT dashboard at: https://berri-sentry.vercel.app
+### View of the reliableGPT dashboard at: https://berri-sentry.vercel.app/<user_email>
+
+
 <img width="1280" alt="Screenshot 2023-07-01 at 8 00 49 PM" src="https://github.com/BerriAI/reliableGPT/assets/29436595/49ff18b6-513e-40cf-a73f-a59242478440">
 
 
