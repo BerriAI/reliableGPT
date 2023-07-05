@@ -260,7 +260,9 @@ class IndividualRequest:
             'error': str(e),
             'recovered_response': result
           },
-          errors=[e])
+          errors=[e],
+          function_name=str(self.model_function),
+          kwargs=kwargs)
       else:
         # No errors, successfull retry
         self.save_request(user_email=self.user_email,
@@ -271,7 +273,9 @@ class IndividualRequest:
                             'error': str(e),
                             'recovered_response': result
                           },
-                          errors=[e])
+                          errors=[e],
+                          function_name=str(self.model_function),
+                          kwargs=kwargs)
     except Exception as e2:
       # Exception 2, After trying to rescue
       print("gets 2nd error: ", e2)
@@ -285,6 +289,8 @@ class IndividualRequest:
           'error2': str(e2),
           'recovered_response': self.graceful_string
         },
-        errors=[e, e2])
+        errors=[e, e2],
+        function_name=str(self.model_function),
+        kwargs=kwargs)
       return result
     return result

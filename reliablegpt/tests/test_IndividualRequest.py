@@ -60,7 +60,7 @@ def test_single_call_bad_key():
     print("Some calls returned errors.")
 
 
-test_single_call_bad_key()
+#test_single_call_bad_key()
 
 
 def test_embedding_bad_key():
@@ -82,7 +82,27 @@ def test_embedding_bad_key():
   print(result)
 
 
-test_embedding_bad_key()
+#test_embedding_bad_key()
+
+
+def test_embedding_bad_key_fail():
+  openai.Embedding.create = reliableGPT(
+    openai.Embedding.create,
+    user_email="krrish@berri.ai",
+    send_notification=True)
+
+  openai.api_key = "bad-key"
+
+  def get_embedding(text, model="text-embedding-ada-002"):
+    text = text.replace("\n", " ")
+    print("text")
+    return openai.Embedding.create(input=[text],
+                                   model=model)["data"][0]["embedding"]
+
+  result = get_embedding("GM")
+  print(result)
+
+#test_embedding_bad_key_fail()
 
 
 def test_bad_open_ai_call():
@@ -129,7 +149,7 @@ def test_bad_open_ai_call_with_q():
   return result
 
 
-test_bad_open_ai_call_with_q()
+# test_bad_open_ai_call_with_q()
 
 
 def test_multiple_calls():

@@ -4,6 +4,7 @@ from reliablegpt.RateLimitHandler import RateLimitHandler
 from reliablegpt.Model import Model
 from reliablegpt.alerting import Alerting
 from reliablegpt.reliableQuery import reliable_query
+import requests
 
 # # Dev Imports
 # from IndividualRequest import IndividualRequest
@@ -19,17 +20,59 @@ posthog = Posthog(
 
 alerting = Alerting()
 
+def save_exception(type, user_email, result="", original_error="", error2="", function_name="", kwargs={}):
+  try:
+    #print("in save exception on reliableGPT")
+    # url = 'http://0.0.0.0:5000/save_exception'
+    url = 'https://reliablegpt-logging-server-7nq8.zeet-berri.zeet.app/save_exception'
+
+    data = {
+            'type': type,
+            'user_email': user_email,
+            'result': result,
+            'original_error': original_error,
+            'error2': error2,
+            'function_name': function_name,
+            'kwargs': kwargs
+        }
+    #print(f"in save exception on reliableGPT, sending req {data}")
+    response = requests.post(url, json=data)
+  except Exception as e:
+      return
+  
+  return response
+
+
+
 # Parent Logging function
 def save_request(user_email,
                  graceful_string,
                  posthog_event="",
                  result="",
                  posthog_metadata={},
-                 errors=[]):
+                 errors=[], function_name="", kwargs={}):
   try:
     if posthog_event != "":
       posthog.capture(user_email, posthog_event,
                       posthog_metadata)  # save posthog event
+      
+      # Log handled and unahndled exceptions in R-GPT servers
+      if posthog_event == 'reliableGPT.recovered_request':
+        original_error = ""
+        if 'error' in posthog_metadata:
+          original_error = posthog_metadata['error']
+        save_exception(type = 'handled', user_email=user_email, result=result, original_error=original_error, function_name=function_name, kwargs=kwargs)
+
+      # Log unhandled exceptions in R-GPT servers
+      if posthog_event == 'reliableGPT.recovered_request_exception':
+        original_error = ""
+        error2 = ""
+        if 'error' in posthog_metadata:
+          original_error = posthog_metadata['error']
+        if 'error2' in posthog_metadata:
+          error2 = posthog_metadata['error2']
+        save_exception(type = 'unhandled', user_email=user_email, result=result, original_error=original_error, error2=error2, function_name=function_name, kwargs=kwargs)
+      
     if result == graceful_string or len(
         errors) == 2:  # returns a graceful string or got a 2nd exception
       # send an email and alert
