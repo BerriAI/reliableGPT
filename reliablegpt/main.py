@@ -1,16 +1,16 @@
 # # Prod Imports
-from reliablegpt.IndividualRequest import IndividualRequest
-from reliablegpt.RateLimitHandler import RateLimitHandler
-from reliablegpt.Model import Model
-from reliablegpt.alerting import Alerting
-from reliablegpt.reliableQuery import reliable_query
+# from reliablegpt.IndividualRequest import IndividualRequest
+# from reliablegpt.RateLimitHandler import RateLimitHandler
+# from reliablegpt.Model import Model
+# from reliablegpt.Alerting import Alerting
+# from reliablegpt.reliableQuery import reliable_query
 import requests
 
 # # Dev Imports
-# from IndividualRequest import IndividualRequest
-# from RateLimitHandler import RateLimitHandler
-# from Model import Model
-# from alerting import Alerting
+from IndividualRequest import IndividualRequest
+from RateLimitHandler import RateLimitHandler
+from Model import Model
+from Alerting import Alerting
 
 from posthog import Posthog
 
@@ -91,9 +91,9 @@ def reliableGPT(openai_create_function,
            user_email="",
            user_token="",
            send_notification=True,
-           model_limits_dir={},
+           caching=False,
+           max_threads=None,
            backup_openai_key=None,
-           queue_requests=False, 
            verbose=False):
   """Determine if an instantiation is calling the rate limit handler or the individual request wrapper directly and return the correct object"""
 
@@ -112,31 +112,14 @@ def reliableGPT(openai_create_function,
 
   model = Model(openai_create_function)
   ## Route to the right object
-  if queue_requests == False:
-    return IndividualRequest(model,
-                             fallback_strategy=fallback_strategy,
-                             graceful_string=graceful_string,
-                             user_email=primary_email,
-                             user_token=user_token,
-                             logging_fn=save_request,
-                             send_notification=send_notification,
-                             backup_openai_key=backup_openai_key, 
-                             verbose=verbose)
-  elif queue_requests == True:
-    max_token_capacity = 40000
-    max_request_capacity = 200
-    ## [TODO]: Allow handling multiple model types (gpt-3.5-turbo AND gpt-4)
-    if model_limits_dir and isinstance(model_limits_dir, dict):
-      keys = list(model_limits_dir.keys())
-      max_token_capacity = model_limits_dir[keys[0]]["max_token_capacity"]
-      max_request_capacity = model_limits_dir[keys[0]]["max_request_capacity"]
-
-    return RateLimitHandler(model,
+  return IndividualRequest(model,
                             fallback_strategy=fallback_strategy,
                             graceful_string=graceful_string,
                             user_email=primary_email,
                             user_token=user_token,
+                            logging_fn=save_request,
                             send_notification=send_notification,
-                            max_request_capacity=max_request_capacity,
-                            max_token_capacity=max_token_capacity,
-                            logging_fn=save_request)
+                            backup_openai_key=backup_openai_key, 
+                            caching=caching,
+                            max_threads=None,
+                            verbose=verbose)

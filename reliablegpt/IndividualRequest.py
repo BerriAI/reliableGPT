@@ -1,4 +1,5 @@
 from termcolor import colored
+import time
 import requests
 import copy
 import posthog
@@ -6,7 +7,22 @@ import importlib
 import openai
 from openai import ChatCompletion
 import traceback
-
+import random
+from uuid import uuid4
+import subprocess
+import importlib
+from waitress import serve
+from flask import Flask, request
+import random
+from uuid import uuid4
+from transformers import AutoTokenizer, AutoModel
+import torch
+import numpy as np
+import chromadb
+import traceback
+import hashlib 
+import psutil
+import os 
 
 class IndividualRequest:
   """A brief description of the class."""
@@ -23,6 +39,9 @@ class IndividualRequest:
                send_notification=False,
                logging_fn=None,
                backup_openai_key="",
+               caching=False,
+               queue_threshold=None,
+               max_threads=None,
                verbose=False):
     # Initialize instance variables
     self.model = model
@@ -34,8 +53,18 @@ class IndividualRequest:
     self.user_token = user_token
     self.save_request = logging_fn
     self.backup_openai_key = backup_openai_key
-
     self.print_verbose(f"INIT fallback strategy {self.fallback_strategy}")
+    self.caching = caching
+    self.max_threads = max_threads
+    if self.caching:
+      self.print_verbose(
+        f"Trying to import caching dependencies - caching set to {self.caching}"
+      )
+      self.chroma_client = chromadb.Client()
+      self.cache = {
+        "global":
+        self.chroma_client.create_collection(name="global_collection")
+      }  # initialize a global/catch-all cache
 
   def print_verbose(self, print_statement):
     if self.verbose:
@@ -49,28 +78,89 @@ class IndividualRequest:
       self.print_verbose(f"this is the openai api base: {openai.api_base}")
       try:
         # this should never block running the openai call
+        # [TODO] make this into a threaded call to reduce impact on latency
         self.save_request(
-            user_email=self.user_email,
-            graceful_string=self.graceful_string,
-            posthog_event='reliableGPT.request',
+          user_email=self.user_email,
+          graceful_string=self.graceful_string,
+          posthog_event='reliableGPT.request',
         )
       except:
         print("ReliableGPT error occured during saving request")
+      if self.max_threads and self.caching:
+        proc = psutil.Process(os.getpid())
+        thread_utilization = len(proc.threads())/self.max_threads
+        self.print_verbose(f"len(proc.threads()): {len(proc.threads())}")
+        self.print_verbose(f"thread_utilization: {thread_utilization}")
+        if len(proc.threads())/self.max_threads > 0.8: # over 80% utilization of threads, start returning cached responses
+          self.print_verbose(
+            f"queue depth is higher than the threshold, start caching")
+          pass
+      print("received request")
       result = self.model_function(*args, **kwargs)
+      if "messages" in kwargs and self.caching:
+        print(kwargs["messages"])
+        input_prompt = "\n".join(message["content"]
+                                 for message in kwargs["messages"])
+        extracted_result = result['choices'][0]['message']['content']
+        self.add_cache(
+          input_prompt, extracted_result
+        )  # [TODO] turn this into a threaded call, reduce latency.
       self.print_verbose(f"This is the result: {str(result)[:500]}")
       return result
     except Exception as e:
       self.print_verbose("catches the error")
       return self.handle_exception(args, kwargs, e)
 
+  def add_cache(self, input_prompt, response):
+    try:
+      if self.caching:
+        if request:
+          if request.args and request.args.get("user_email"):
+            hashed_value = hashlib.sha1(self.user_email.encode()).hexdigest()
+            id = str(uuid4())
+            if hashed_value in self.cache:
+              self.cache[hashed_value].add(documents=[input_prompt],
+                                           metadatas=[{
+                                             "response": response
+                                           }],
+                                           ids=str(id))
+            else:
+              self.cache[hashed_value] = self.chroma_client.create_collection(
+                name=f"{hashed_value}_collection")
+              self.cache[hashed_value].add(documents=[input_prompt],
+                                           metadatas=[{
+                                             "response": response
+                                           }],
+                                           ids=str(id))
+    except:
+      pass
+
+  def try_cache_request(self, e, query=None):
+    if query:
+      self.print_verbose("Inside the cache")
+      if request:
+        if request.args and request.args.get("user_email"):
+          hashed_value = hashlib.sha1(
+            request.args.get("user_email").encode()).hexdigest()
+          self.print_verbose(f"hashed value: {hashed_value}")
+          if hashed_value in self.cache:
+            collection = self.cache[hashed_value]
+            results = collection.query(query_texts=[self.query], n_results=1)
+            return results["metadatas"][0][0]["response"]
+    self.print_verbose(f"cache miss!")
+    raise e
+
   def fallback_request(self, args, kwargs, fallback_strategy):
-    try: 
+    try:
       self.print_verbose("In fallback request")
       result = None
       new_kwargs = copy.deepcopy(kwargs)  # Create a deep copy of kwargs
-      if self.backup_openai_key and len(self.backup_openai_key) > 0: # user passed in a backup key for the raw openai endpoint
-        # switch to the raw openai model instead of using azure. 
-        new_kwargs["openai2"] = openai.__dict__.copy() # preserve the azure endpoint details
+      if self.backup_openai_key and len(
+          self.backup_openai_key
+      ) > 0:  # user passed in a backup key for the raw openai endpoint
+        # switch to the raw openai model instead of using azure.
+        new_kwargs["openai2"] = openai.__dict__.copy(
+        )  # preserve the azure endpoint details
         if "Embedding" in str(self.model_function):
           fallback_strategy = ["text-embedding-ada-002"]
 
@@ -95,8 +185,15 @@ class IndividualRequest:
         openai.api_base = "https://api.openai.com/v1"
         openai.api_version = None
         openai.api_key = self.backup_openai_key
-        new_kwargs_except_openai_attributes = {k: v for k, v in new_kwargs.items() if k != "openai2"}
-        new_kwargs_except_engine = {k: v for k, v in new_kwargs_except_openai_attributes.items() if k != "engine"}
+        new_kwargs_except_openai_attributes = {
+          k: v
+          for k, v in new_kwargs.items() if k != "openai2"
+        }
+        new_kwargs_except_engine = {
+          k: v
+          for k, v in new_kwargs_except_openai_attributes.items()
+          if k != "engine"
+        }
         completion = self.model_function(**new_kwargs_except_engine)
         openai.api_type = new_kwargs["openai2"]["api_type"]
         openai.api_base = new_kwargs["openai2"]["api_base"]
@@ -236,7 +333,7 @@ class IndividualRequest:
     result = self.graceful_string  # default to graceful string
     try:
       # Attempt No. 1, exception is received from OpenAI
-      print(colored(f"ReliableGPT: Got Exception {e}", 'red'))
+      self.print_verbose(colored(f"ReliableGPT: Got Exception {e}", 'red'))
       result = self.handle_openAI_error(
         args=args,
         kwargs=kwargs,
@@ -245,11 +342,17 @@ class IndividualRequest:
         graceful_string=self.graceful_string,
         user_email=self.user_email,
         user_token=self.user_token)
-      print(
+      print(f"result: {result}")
+      self.print_verbose(
         colored(f"ReliableGPT: Recovered got a successful response {result}",
                 "green"))
       if result == self.graceful_string:
-        # did a retry but still returned graceful string
+        # did a retry with model fallback, so now try caching.
+        if "messages" in kwargs and self.caching:
+          print(kwargs["messages"])
+          input_prompt = "\n".join(message["content"]
+                                   for message in kwargs["messages"])
+          self.try_cache_request(e=e, query=input_prompt)
         print("returns graceful string")
         self.save_request(
           user_email=self.user_email,
@@ -278,6 +381,7 @@ class IndividualRequest:
                           kwargs=kwargs)
     except Exception as e2:
       # Exception 2, After trying to rescue
+      traceback.print_exc()
       print("gets 2nd error: ", e2)
       self.save_request(
         user_email=self.user_email,
@@ -292,5 +396,5 @@ class IndividualRequest:
         errors=[e, e2],
         function_name=str(self.model_function),
         kwargs=kwargs)
-      return result
-    return result
+      raise e
+    raise e
