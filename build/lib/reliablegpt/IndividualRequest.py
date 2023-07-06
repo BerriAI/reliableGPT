@@ -25,6 +25,7 @@ import psutil
 import os 
 from threading import active_count
 
+
 class IndividualRequest:
   """A brief description of the class."""
 
@@ -406,5 +407,6 @@ class IndividualRequest:
         errors=[e, e2],
         function_name=str(self.model_function),
         kwargs=kwargs)
+      return result
       raise e
     return result
