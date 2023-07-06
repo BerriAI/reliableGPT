@@ -90,13 +90,27 @@ class IndividualRequest:
               f"queue depth is higher than the threshold, start caching")
             result = self.try_cache_request(query=input_prompt)
             if self.alerting:
+              # save_exception
               self.alerting.add_error(error_type="Thread Utilization > 85%", error_description="Your thread utilization is over 85%. We've started responding with cached results, to prevent requests from dropping. Please increase capacity (allocate more threads/servers) to prevent result quality from dropping.")
             if result == None: # cache miss!
               pass
             else:
               self.print_verbose(f"returns cached result: {result}")
+              self.save_request(
+                user_email=self.user_email,
+                posthog_event='reliableGPT.recovered_request_cache',
+                result=result,
+                posthog_metadata={
+                  'error': 'High Thread Utilization',
+                  'recovered_response': result,
+                },
+                errors=[e],
+                function_name=str(self.model_function),
+                kwargs=kwargs
+              )
               return result
-      print("received request")
+      # print("received request")
+      # Run user request
       result = self.model_function(*args, **kwargs)
       if "messages" in kwargs and self.caching:
         print(kwargs["messages"])
@@ -369,6 +383,18 @@ class IndividualRequest:
           if cached_response == None:
             pass
           else:
+            self.save_request(
+              user_email=self.user_email,
+              posthog_event='reliableGPT.recovered_request_cache',
+              result=cached_response,
+              posthog_metadata={
+                'error': str(e),
+                'recovered_response': cached_response,
+              },
+              errors=[e],
+              function_name=str(self.model_function),
+              kwargs=kwargs
+            )
             return cached_response
         print("returns graceful string")
         self.save_request(
