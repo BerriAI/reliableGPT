@@ -8,7 +8,6 @@ import requests
 
 # # Dev Imports
 from IndividualRequest import IndividualRequest
-from RateLimitHandler import RateLimitHandler
 from Model import Model
 from Alerting import Alerting
 
@@ -122,4 +121,5 @@ def reliableGPT(openai_create_function,
                             backup_openai_key=backup_openai_key, 
                             caching=caching,
                             max_threads=None,
+                            alerting=alerting,
                             verbose=verbose)

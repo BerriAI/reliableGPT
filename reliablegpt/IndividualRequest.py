@@ -23,6 +23,7 @@ import traceback
 import hashlib 
 import psutil
 import os 
+from threading import active_count
 
 class IndividualRequest:
   """A brief description of the class."""
@@ -40,7 +41,7 @@ class IndividualRequest:
                logging_fn=None,
                backup_openai_key="",
                caching=False,
-               queue_threshold=None,
+               alerting=None,
                max_threads=None,
                verbose=False):
     # Initialize instance variables
@@ -56,6 +57,7 @@ class IndividualRequest:
     self.print_verbose(f"INIT fallback strategy {self.fallback_strategy}")
     self.caching = caching
     self.max_threads = max_threads
+    self.alerting = alerting
     if self.caching:
       self.print_verbose(
         f"Trying to import caching dependencies - caching set to {self.caching}"
@@ -87,14 +89,17 @@ class IndividualRequest:
       except:
         print("ReliableGPT error occured during saving request")
       if self.max_threads and self.caching:
-        proc = psutil.Process(os.getpid())
-        thread_utilization = len(proc.threads())/self.max_threads
-        self.print_verbose(f"len(proc.threads()): {len(proc.threads())}")
-        self.print_verbose(f"thread_utilization: {thread_utilization}")
-        if len(proc.threads())/self.max_threads > 0.8: # over 80% utilization of threads, start returning cached responses
+        thread_utilization = active_count()/self.max_threads
+        self.print_verbose(f"Thread utilization: {thread_utilization}")
+        if thread_utilization > 0.8: # over 80% utilization of threads, start returning cached responses
           self.print_verbose(
             f"queue depth is higher than the threshold, start caching")
-          pass
+          result = self.try_cache_request(query=input_prompt)
+          self.alerting.add_error(error_type="Thread Utilization > 85%", error_description="Your thread utilization is over 85%. We've started responding with cached results, to prevent requests from dropping. Please increase capacity (allocate more threads/servers) to prevent result quality from dropping.")
+          if result == None:
+            pass
+          else:
+            return result
       print("received request")
       result = self.model_function(*args, **kwargs)
       if "messages" in kwargs and self.caching:
@@ -135,7 +140,7 @@ class IndividualRequest:
     except:
       pass
 
-  def try_cache_request(self, e, query=None):
+  def try_cache_request(self, query=None):
     if query:
       self.print_verbose("Inside the cache")
       if request:
@@ -147,8 +152,9 @@ class IndividualRequest:
             collection = self.cache[hashed_value]
             results = collection.query(query_texts=[self.query], n_results=1)
             return results["metadatas"][0][0]["response"]
-    self.print_verbose(f"cache miss!")
-    raise e
+    else:
+      self.print_verbose(f"cache miss!")
+      return None
 
   def fallback_request(self, args, kwargs, fallback_strategy):
     try:
@@ -352,7 +358,11 @@ class IndividualRequest:
           print(kwargs["messages"])
           input_prompt = "\n".join(message["content"]
                                    for message in kwargs["messages"])
-          self.try_cache_request(e=e, query=input_prompt)
+          cached_response = self.try_cache_request(query=input_prompt)
+          if cached_response == None:
+            pass
+          else:
+            return cached_response
         print("returns graceful string")
         self.save_request(
           user_email=self.user_email,
@@ -397,4 +407,4 @@ class IndividualRequest:
         function_name=str(self.model_function),
         kwargs=kwargs)
       raise e
-    raise e
+    return result
