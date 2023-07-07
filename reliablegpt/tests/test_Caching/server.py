@@ -20,8 +20,8 @@ def logging_fn(*args, **kwargs):
 openai.ChatCompletion.create = reliableGPT(
   openai.ChatCompletion.create,
   caching=True,
-  user_email=["krrish@berri.ai"],
-  max_threads=5, verbose=True)
+  user_email=["ishaan@berri.ai"],
+  max_threads=1, verbose=True)
 
 
 app = Flask(__name__)
@@ -45,4 +45,4 @@ def index():
 
 if __name__ == "__main__":
   from waitress import serve
-  serve(app, host="0.0.0.0", port=4000, threads=5)
+  serve(app, host="0.0.0.0", port=4000, threads=1)

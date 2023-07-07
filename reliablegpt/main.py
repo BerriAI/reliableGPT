@@ -1,15 +1,15 @@
 # # Prod Imports
-# from reliablegpt.IndividualRequest import IndividualRequest
-# from reliablegpt.RateLimitHandler import RateLimitHandler
-# from reliablegpt.Model import Model
-# from reliablegpt.Alerting import Alerting
-# from reliablegpt.reliableQuery import reliable_query
+from reliablegpt.IndividualRequest import IndividualRequest
+from reliablegpt.RateLimitHandler import RateLimitHandler
+from reliablegpt.Model import Model
+from reliablegpt.alerting import Alerting
+from reliablegpt.reliableQuery import reliable_query
 import requests
 
 # # Dev Imports
-from IndividualRequest import IndividualRequest
-from Model import Model
-from Alerting import Alerting
+# from IndividualRequest import IndividualRequest
+# from Model import Model
+# from Alerting import Alerting
 
 from posthog import Posthog
 
@@ -127,6 +127,6 @@ def reliableGPT(openai_create_function,
                             send_notification=send_notification,
                             backup_openai_key=backup_openai_key, 
                             caching=caching,
-                            max_threads=None,
+                            max_threads=max_threads,
                             alerting=alerting,
                             verbose=verbose)

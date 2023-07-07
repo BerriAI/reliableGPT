@@ -5,7 +5,7 @@ import time
 url = "http://0.0.0.0:4000/test_func"
 params = {
   "user_email": "ipoetdawah@gmail.com",
-  "instance_id": "a54b2f16-966c-4c0c-8eae-f7fdd0902a62"
+  "instance_id": "g54b2f16-966c-4c0c-8eae-f7fdd0902a62"
 }
 
 queries = []
@@ -13,11 +13,9 @@ for i in range(10):
   query = f"who is person {i+1}"
   queries.append(query)
 
-
 def make_request(query):
   params["query"] = query
   print(f"making request{query}")
-  time.sleep(1)
   response = requests.get(url, params=params)
   print(response)
   return response.text
