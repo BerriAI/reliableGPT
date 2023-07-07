@@ -57,6 +57,7 @@ class IndividualRequest:
     self.print_verbose(f"INIT fallback strategy {self.fallback_strategy}")
     self.caching = caching
     self.max_threads = max_threads
+    self.print_verbose(f"INIT with threads {self.max_threads} {self.caching} {max_threads}")
     self.alerting = alerting
     self.app = app
     if self.app:
@@ -90,6 +91,7 @@ class IndividualRequest:
         print("ReliableGPT error occured during saving request")
       self.print_verbose(f"max threads: {self.max_threads}, caching: {self.caching}")
       if self.max_threads and self.caching:
+        self.print_verbose(f'current util: {active_count()/self.max_threads}')
         thread_utilization = active_count()/self.max_threads
         self.print_verbose(f"Thread utilization: {thread_utilization}")
         if thread_utilization > 0.8: # over 80% utilization of threads, start returning cached responses
@@ -101,19 +103,35 @@ class IndividualRequest:
               f"queue depth is higher than the threshold, start caching")
             result = self.try_cache_request(query=input_prompt)
             if self.alerting:
+              # save_exception
               self.alerting.add_error(error_type="Thread Utilization > 85%", error_description="Your thread utilization is over 85%. We've started responding with cached results, to prevent requests from dropping. Please increase capacity (allocate more threads/servers) to prevent result quality from dropping.")
             if result == None: # cache miss!
               pass
             else:
               self.print_verbose(f"returns cached result: {result}")
+              self.save_request(
+                user_email=self.user_email,
+                posthog_event='reliableGPT.recovered_request_cache',
+                graceful_string = self.graceful_string,
+                result=result,
+                posthog_metadata={
+                  'error': 'High Thread Utilization',
+                  'recovered_response': result,
+                },
+                errors=['High Thread Utilization'],
+                function_name=str(self.model_function),
+                kwargs=kwargs
+              )
               return result
-      print("received request")
+      # print("received request")
+      # Run user request
       result = self.model_function(*args, **kwargs)
       if "messages" in kwargs and self.caching:
         print(kwargs["messages"])
         input_prompt = "\n".join(message["content"]
                                  for message in kwargs["messages"])
         extracted_result = result['choices'][0]['message']['content']
+        self.print_verbose(f'This is extracted result {extracted_result}')
         self.add_cache(
           input_prompt, extracted_result
         )  # [TODO] turn this into a threaded call, reduce latency.
@@ -166,8 +184,10 @@ class IndividualRequest:
                 "input_prompt": query,
             }
             response = requests.get(url, params=querystring)
-            print(f"cached response: {response}")
-            return response.json()["response"]
+            self.print_verbose(f"cached response: {response.json()}")
+            extracted_result = response.json()["response"]
+            results = {"choices":[{"message":{"content": extracted_result}}]}
+            return results
     except:
       traceback.print_exc()
       pass
@@ -380,6 +400,19 @@ class IndividualRequest:
           if cached_response == None:
             pass
           else:
+            self.save_request(
+              user_email=self.user_email,
+              posthog_event='reliableGPT.recovered_request_cache',
+              graceful_string = self.graceful_string,
+              result=cached_response,
+              posthog_metadata={
+                'error': 'High Thread Utilization',
+                'recovered_response': cached_response,
+              },
+              errors=['High Thread Utilization'],
+              function_name=str(self.model_function),
+              kwargs=kwargs
+            )
             return cached_response
         print("returns graceful string")
         self.save_request(
