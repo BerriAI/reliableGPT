@@ -7,25 +7,6 @@ reliableGPT handles:
 * Context Window Errors
 * Invalid API Key errors 
 
-## 👉 Code Examples
-* [reliableGPT Getting Started](https://colab.research.google.com/drive/1za1eU6EXLlW4UjHy_YYSc7veDeGTvLON?usp=sharing)
-* [reliableGPT (Advanced) OpenAI Key Manager](https://colab.research.google.com/drive/1xW-fTKjIQyVvhPLo5MWFCY7YlaMxBy_v?usp=sharing)
-* 🚨**NEW** [reliableGPT + GPT-4 Rate Limit Errors](https://colab.research.google.com/drive/1zFmhRbH46Blh7U1ymPSxUcstpMgT4ETX?usp=sharing)
-
-![ezgif com-optimize](https://github.com/BerriAI/reliableGPT/assets/17561003/017046b0-0044-4df3-a740-d5edd9e23738)
-
-### How does it handle failures?
-* **Specify a fallback strategy for handling failed requests**: For instance, you can define `fallback_strategy=['gpt-3.5-turbo', 'gpt-4', 'gpt-3.5-turbo-16k', 'text-davinci-003']`, and if you hit an error then reliableGPT will retry with the specified models in the given order until it receives a valid response. This is optional, and reliableGPT also has a default strategy it uses. 
-
-* **Specify backup tokens**:
-Using your OpenAI keys across multiple servers - and just got one rotated? You can pass backup keys using `add_keys()`. We will store and go through these, in case any get keys get rotated by OpenAI. For security, we use special tokens, and enable you to delete all your keys (using `delete_keys()`) as well. 
-
-* **Context Window Errors**: 
-For context window errors it automatically retries your request with models with larger context windows
-
-* **Rate Limit Errors**: 
-Set `queue_requests=True` and We put your requests in a queue, and run parallel batches - while accounting for your OpenAI or Azure OpenAI request + token limits (works with Langchain/LlamaIndex/Azure as well).
-
 # Getting Started
 ## Step 1. pip install package
 ```
@@ -38,23 +19,25 @@ from reliablegpt import reliableGPT
 openai.ChatCompletion.create = reliableGPT(openai.ChatCompletion.create, user_email='ishaan@berri.ai')
 ```
 
-## Advanced Usage - Queue Requests for Token & Request Limits 
-### Guaranteed responses from Azure + OpenAI GPT-4, GPT 3.5 Turbo - Handle Rate Limit Errors
-Use `queue_requests=True` and set your token limits as ` model_limits_dir = {"gpt-3.5-turbo": {"max_token_capacity": 1000000, "max_request_capacity": 10000}` You can find your account rate limits here: https://platform.openai.com/account/rate-limits
+## 👉 Code Examples
+* [reliableGPT Getting Started](https://colab.research.google.com/drive/1za1eU6EXLlW4UjHy_YYSc7veDeGTvLON?usp=sharing)
+* [reliableGPT (Advanced) OpenAI Key Manager](https://colab.research.google.com/drive/1xW-fTKjIQyVvhPLo5MWFCY7YlaMxBy_v?usp=sharing)
 
-Here's an example request using queing to handle rate limits  
-```python
-openai.ChatCompletion.create = reliableGPT(
-  openai.ChatCompletion.create, 
-  user_email= ["ishaan@berri.ai", "krrish@berri.ai"], 
-  queue_requests=True,
-  model_limits_dir = {"gpt-3.5-turbo": {"max_token_capacity": 1000000, "max_request_capacity": 10000}},
-  fallback_strategy=['gpt-3.5-turbo', 'text-davinci-003', 'gpt-3.5-turbo']
-)
-```
+![ezgif com-optimize](https://github.com/BerriAI/reliableGPT/assets/17561003/017046b0-0044-4df3-a740-d5edd9e23738)
 
-[👋 Give us feedback on how we could make this easier - Email us (krrish@berri.ai) or Text/Whatsapp us (+17708783106)].
+### How does it handle failures?
+* **Specify a fallback strategy for handling failed requests**: For instance, you can define `fallback_strategy=['gpt-3.5-turbo', 'gpt-4', 'gpt-3.5-turbo-16k', 'text-davinci-003']`, and if you hit an error then reliableGPT will retry with the specified models in the given order until it receives a valid response. This is optional, and reliableGPT also has a default strategy it uses. 
 
+* **Specify backup tokens**:
+Using your OpenAI keys across multiple servers - and just got one rotated? You can pass backup keys using `add_keys()`. We will store and go through these, in case any get keys get rotated by OpenAI. For security, we use special tokens, and enable you to delete all your keys (using `delete_keys()`) as well. 
+
+* **Context Window Errors**: 
+For context window errors it automatically retries your request with models with larger context windows
+
+* **Caching**
+If model fallback + retries fails - reliableGPT also provides caching (hosted - not in-memory). You can turn this on with `caching=True`. This also works for request timeout / task queue depth issues. This is optional, scroll down to learn more 👇. 
+
+## Advanced Usage
 ### Breakdown of params
 Here's everything you can pass to reliableGPT 
 
