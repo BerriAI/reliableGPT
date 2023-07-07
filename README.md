@@ -1,11 +1,13 @@
 # 💪 reliableGPT: Stop OpenAI Errors in Production 🚀
 
-⚡️ Never worry about overloaded OpenAI servers, rotated keys, or context window limitations again!⚡️
+⚡️ Get 0 dropped requests for your LLM app in production ⚡️
 
-reliableGPT handles:
-* OpenAI APIError, OpenAI Timeout, OpenAI Rate Limit Errors, OpenAI Service UnavailableError / Overloaded
-* Context Window Errors
-* Invalid API Key errors 
+When a request to your llm app fails, reliableGPT handles it by:
+* Retrying with an alternate model
+* Retrying with a larger context window model for Context Window Errors
+* Sending a Cached Response (using semantic similarity)
+* Retrying with a larger context window model for Context Window Errors
+* Retry with a fallback API key for Invalid API Key errors 
 
 # Getting Started
 ## Step 1. pip install package
@@ -18,6 +20,13 @@ Integrating with OpenAI, Azure OpenAI, Langchain, LlamaIndex
 from reliablegpt import reliableGPT
 openai.ChatCompletion.create = reliableGPT(openai.ChatCompletion.create, user_email='ishaan@berri.ai')
 ```
+
+## Troubleshooting
+If you experience failure, try 
+```
+pip install reliableGPT==0.2.976
+```
+Call/Text Ishaan at +14126186238
 
 ## 👉 Code Examples
 * [reliableGPT Getting Started](https://colab.research.google.com/drive/1za1eU6EXLlW4UjHy_YYSc7veDeGTvLON?usp=sharing)
