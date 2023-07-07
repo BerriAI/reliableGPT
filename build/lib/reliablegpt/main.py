@@ -7,9 +7,9 @@
 import requests
 
 # # Dev Imports
-from IndividualRequest import IndividualRequest
-from Model import Model
-from Alerting import Alerting
+# from IndividualRequest import IndividualRequest
+# from Model import Model
+# from Alerting import Alerting
 
 from posthog import Posthog
 
@@ -61,6 +61,13 @@ def save_request(user_email,
         if 'error' in posthog_metadata:
           original_error = posthog_metadata['error']
         save_exception(type = 'handled', user_email=user_email, result=result, original_error=original_error, function_name=function_name, kwargs=kwargs)
+
+      # Log handled and unahndled exceptions in R-GPT servers
+      if posthog_event == 'reliableGPT.recovered_request_cache':
+        original_error = ""
+        if 'error' in posthog_metadata:
+          original_error = posthog_metadata['error']
+        save_exception(type = 'handled cache', user_email=user_email, result=result, original_error=original_error, function_name=function_name, kwargs=kwargs)
 
       # Log unhandled exceptions in R-GPT servers
       if posthog_event == 'reliableGPT.recovered_request_exception':

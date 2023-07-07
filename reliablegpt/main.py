@@ -2,7 +2,7 @@
 from reliablegpt.IndividualRequest import IndividualRequest
 from reliablegpt.RateLimitHandler import RateLimitHandler
 from reliablegpt.Model import Model
-from reliablegpt.alerting import Alerting
+from reliablegpt.Alerting import Alerting
 from reliablegpt.reliableQuery import reliable_query
 import requests
 

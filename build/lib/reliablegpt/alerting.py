@@ -62,8 +62,9 @@ class Alerting:
   def add_error(self, openai_error=None, error_description=None, error_type=None):
     if openai_error != None:
       openai_error = openai_error.error  # index into the error attribute of the class
-      if "type" in openai_error:
-        error_type = openai_error['type']
+    error_type = error_type  # defalt to being None
+    if openai_error != None and 'type' in openai_error:
+      error_type = openai_error['type']
     elif error_description and error_type:
       error_type = error_type
       openai_error = error_description
