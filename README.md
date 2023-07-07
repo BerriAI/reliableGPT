@@ -3,7 +3,7 @@
 ⚡️ Get 0 dropped requests for your LLM app in production ⚡️
 
 When a request to your llm app fails, reliableGPT handles it by:
-* Retrying with an alternate model
+* Retrying with an alternate model - GPT-4, GPT3.5, GPT3.5 16k, text-davinci-003
 * Retrying with a larger context window model for Context Window Errors
 * Sending a Cached Response (using semantic similarity)
 * Retrying with a larger context window model for Context Window Errors
