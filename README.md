@@ -67,53 +67,80 @@ Here's everything you can pass to reliableGPT
 | `model_limits_dir`| dict | Optional | Note: Required if using `queue_requests = True`, For models you want to handle rate limits for set model_limits_dir = {"gpt-3.5-turbo": {"max_token_capacity": 1000000, "max_request_capacity": 10000}} You can find your account rate limits here: https://platform.openai.com/account/rate-limits |
 | `user_token`| string | Optional | Pass your user token if you want us to handle OpenAI Invalid Key Errors - we'll rotate through your stored keys (more on this below 👇) till we get one that works|
 | `backup_openai_key`| string | Optional | Pass your OpenAI API key if you're using Azure and want to switch to OpenAI in case your requests start failing |
+| `caching` | bool | Optional | Cache your openai responses, Used as backup in case model fallback fails **or** overloaded queue (if you're servers are being overwhelmed with requests, it'll alert you and return cached responses, so that customer requests don't get dropped) | 
+| `max_threads` | int | Optional | Pass this in alongside `caching=True`, for it to handle the overloaded queue scenario |
 
-## Reliable Data Loaders
-Use reliableGPT for retry + alerting on langchain data loaders.
-* Fix + retry malformed urls
-* Retry different data loaders for PDFs and CSVs
-* Get email alerts w/ failing file/url if there's still errors
+# 👨‍🔬 Use Cases
 
-Here's an example:
-```
-from reliablegpt import reliableData
-# initialize your langchain text splitter
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-text_splitter = RecursiveCharacterTextSplitter(chunk_size=3000,
-                                               chunk_overlap=200,
-                                               length_function=len)
-
-# initialize reliableData object. Pass in your email, any metadata you want to receive in your email alerts, and your initialized langchain text splitter
-rDL = reliableData(user_emails=["krrish@berri.ai"], metadata={"environment": "local"}, text_splitter=text_splitter)
-
-# identify the impacted user (can be email/id/etc.)
-rDL.set_user("ishaan@berri.ai")
-
-# just wrap your ingestion function with ReliableDataLoaders 
-chunks = rDL.reliableDataLoaders(ingest(file, api_url, input_url), filepath="data/" + file.filename, web_url=input_url)
+## Switch between Azure OpenAI and raw OpenAI
+If you're using Azure OpenAI and facing issues like Read/Request Timeouts, Rate limits, etc. you can use reliableGPT 💪 to fall back to the raw OpenAI endpoints if your Azure OpenAI endpoint fails 
+### Step 1. Import reliableGPT 
+```python
+from reliablegpt import reliableGPT
 ```
 
-## Track LLM Server Dropped Requests, Errors
-Use reliableGPT to track Incoming Requests, Dropped Requests - Timeout Requests + Error Requests 
-
-In order to get started add the `@reliable_query` decorator to your query endpoint on your App server, ensure to pass in your user_email to access your logs, your logs will be available at https://berri-sentry.vercel.app/<your user_email>
-
+### Step 2. Set your backup openai token + [Optional] Set fallback strategy
+Note: **This is stored locally.** 
+```python
+#Set the backup openai key
+openai.ChatCompletion.create = reliableGPT(
+  openai.ChatCompletion.create,
+  user_email="krrish@berri.ai",
+  backup_openai_key=os.getenv("OPENAI_API_KEY"),
+  fallback_strategy=["gpt-4", "gpt-4-32k"],
+  verbose=True)
 ```
-from reliablegpt import reliable_query
 
-@app.route("/berri_query")
-@reliable_query(user_email='ishaan@berri.ai')
-def berri_query():
-  print('Request receieved: ', request) 
-  # parse input params
-  query = request.args.get("query")
+### Step 3. Test with a bad Azure Key! 
+```python
+#bad key
+openai.api_key = "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"
 
+for question in list_questions:
+  response = openai.ChatCompletion.create(model="gpt-4", engine="chatgpt-test", messages=[{"role":"user", "content": "Hey! how's it going?"}])
+  print(response)
 ```
-### View of the reliableGPT dashboard at: https://berri-sentry.vercel.app/<user_email>
 
+## Handle overloaded server w/ Caching
+If all else fails, reliableGPT will respond with previously cached responses. We store this in a Supabase table and use cosine similarity for similarity based retrieval. Why not in-memory cache? Because when we autoscale / push new updates to our server, we didn't want the cache to be wiped out. 
 
-<img width="1280" alt="Screenshot 2023-07-01 at 8 00 49 PM" src="https://github.com/BerriAI/reliableGPT/assets/29436595/49ff18b6-513e-40cf-a73f-a59242478440">
+### Step 1. Import reliableGPT 
+```python
+from reliablegpt import reliableGPT
+```
 
+### Step 2. Turn on caching
+```python
+#Set the backup openai key
+openai.ChatCompletion.create = reliableGPT(
+  openai.ChatCompletion.create,
+  user_email="krrish@berri.ai",
+  caching=True)
+```
+
+#### Optional: Pass your max threads
+Tell reliableGPT what the maximum number of threads you have, handling your requests for you. 
+e.g. The number of threads for this flask app is `50`
+```python
+if __name__ == "__main__":
+  from waitress import serve
+  serve(app, host="0.0.0.0", port=4000, threads=50)
+```
+
+Tell reliableGPT what the maximum number of threads is - `max_threads=50`
+```python
+#Set the backup openai key
+openai.ChatCompletion.create = reliableGPT(
+  openai.ChatCompletion.create,
+  user_email="krrish@berri.ai",
+  caching=True,
+  max_threads=50)
+```
+
+### Step 3. Test it
+Check out [./reliablegpt/tests/test_Caching](https://github.com/BerriAI/reliableGPT/tree/main/reliablegpt/tests/test_Caching)
+
+We spin up a flask server, and then run a test script to run a set of questions against the flask server. 
 
 ## Handle **rotated keys** 
 ### Step 1. Add your keys 
