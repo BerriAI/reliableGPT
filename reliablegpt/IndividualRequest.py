@@ -29,6 +29,7 @@ class IndividualRequest:
 
   def __init__(self,
                model=None,
+               app: Flask=None,
                fallback_strategy=[
                  'gpt-3.5-turbo', 'text-davinci-003', 'gpt-4',
                  'text-davinci-002'
@@ -57,6 +58,15 @@ class IndividualRequest:
     self.caching = caching
     self.max_threads = max_threads
     self.alerting = alerting
+    self.app = app
+    if self.app:
+      self.app.register_error_handler(Exception, self.handle_unhandled_exception)
+      self.app.register_error_handler(500, self.handle_unhandled_exception)
+  
+  def handle_unhandled_exception(self, e):
+    self.print_verbose(colored("UNHANDLED EXCEPTION OCCURRED", "red"))
+    if self.alerting:
+      self.alerting.add_error(error_type="Unhandled Exception", error_description=traceback.format_exc())
 
   def print_verbose(self, print_statement):
     if self.verbose:
@@ -78,6 +88,7 @@ class IndividualRequest:
         )
       except:
         print("ReliableGPT error occured during saving request")
+      self.print_verbose(f"max threads: {self.max_threads}, caching: {self.caching}")
       if self.max_threads and self.caching:
         thread_utilization = active_count()/self.max_threads
         self.print_verbose(f"Thread utilization: {thread_utilization}")

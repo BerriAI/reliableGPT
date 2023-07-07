@@ -59,12 +59,11 @@ class Alerting:
       self.user_emails.add(user_email)
     return
 
-  def add_error(self, openai_error, error_description=None, error_type=None):
+  def add_error(self, openai_error=None, error_description=None, error_type=None):
     if openai_error != None:
       openai_error = openai_error.error  # index into the error attribute of the class
-    error_type = None  # defalt to being None
-    if openai_error != None and 'type' in openai_error:
-      error_type = openai_error['type']
+      if "type" in openai_error:
+        error_type = openai_error['type']
     elif error_description and error_type:
       error_type = error_type
       openai_error = error_description
@@ -74,7 +73,6 @@ class Alerting:
     if curr_time == self.current_time_block:
       if error_type in self.unhandled_errors:
         self.unhandled_errors[error_type] += 1
-        print(f"Got unhandled error {self.unhandled_errors}")
       else:
         self.unhandled_errors[error_type] = 1
       if self.unhandled_errors[error_type] >= 5:

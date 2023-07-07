@@ -18,13 +18,11 @@ from uuid import uuid4
 from transformers import AutoTokenizer, AutoModel
 import torch
 import numpy as np
-import chromadb
 import traceback
 import hashlib 
 import psutil
 import os 
 from threading import active_count
-
 
 class IndividualRequest:
   """A brief description of the class."""
@@ -59,15 +57,6 @@ class IndividualRequest:
     self.caching = caching
     self.max_threads = max_threads
     self.alerting = alerting
-    if self.caching:
-      self.print_verbose(
-        f"Trying to import caching dependencies - caching set to {self.caching}"
-      )
-      self.chroma_client = chromadb.Client()
-      self.cache = {
-        "global":
-        self.chroma_client.create_collection(name="global_collection")
-      }  # initialize a global/catch-all cache
 
   def print_verbose(self, print_statement):
     if self.verbose:
@@ -89,18 +78,25 @@ class IndividualRequest:
         )
       except:
         print("ReliableGPT error occured during saving request")
+      self.print_verbose(f"max threads: {self.max_threads}, caching: {self.caching}")
       if self.max_threads and self.caching:
         thread_utilization = active_count()/self.max_threads
         self.print_verbose(f"Thread utilization: {thread_utilization}")
         if thread_utilization > 0.8: # over 80% utilization of threads, start returning cached responses
-          self.print_verbose(
-            f"queue depth is higher than the threshold, start caching")
-          result = self.try_cache_request(query=input_prompt)
-          self.alerting.add_error(error_type="Thread Utilization > 85%", error_description="Your thread utilization is over 85%. We've started responding with cached results, to prevent requests from dropping. Please increase capacity (allocate more threads/servers) to prevent result quality from dropping.")
-          if result == None:
-            pass
-          else:
-            return result
+          if "messages" in kwargs and self.caching:
+            print(kwargs["messages"])
+            input_prompt = "\n".join(message["content"]
+                                    for message in kwargs["messages"])
+            self.print_verbose(
+              f"queue depth is higher than the threshold, start caching")
+            result = self.try_cache_request(query=input_prompt)
+            if self.alerting:
+              self.alerting.add_error(error_type="Thread Utilization > 85%", error_description="Your thread utilization is over 85%. We've started responding with cached results, to prevent requests from dropping. Please increase capacity (allocate more threads/servers) to prevent result quality from dropping.")
+            if result == None: # cache miss!
+              pass
+            else:
+              self.print_verbose(f"returns cached result: {result}")
+              return result
       print("received request")
       result = self.model_function(*args, **kwargs)
       if "messages" in kwargs and self.caching:
@@ -122,40 +118,51 @@ class IndividualRequest:
       if self.caching:
         if request:
           if request.args and request.args.get("user_email"):
-            hashed_value = hashlib.sha1(self.user_email.encode()).hexdigest()
-            id = str(uuid4())
-            if hashed_value in self.cache:
-              self.cache[hashed_value].add(documents=[input_prompt],
-                                           metadatas=[{
-                                             "response": response
-                                           }],
-                                           ids=str(id))
+            customer_id = request.args.get("user_email")
+            if request.args.get("instance_id"):
+              instance_id = request.args.get("instance_id")
             else:
-              self.cache[hashed_value] = self.chroma_client.create_collection(
-                name=f"{hashed_value}_collection")
-              self.cache[hashed_value].add(documents=[input_prompt],
-                                           metadatas=[{
-                                             "response": response
-                                           }],
-                                           ids=str(id))
+              instance_id = 0000 # default instance id if none passed in
+            user_email = self.user_email
+            url = "https://reliablegpt-logging-server-7nq8.zeet-berri.zeet.app/add_cache"
+            querystring = {
+              "customer_id": customer_id,
+              "instance_id": instance_id, 
+              "user_email": user_email, 
+              "input_prompt": input_prompt,
+              "response": response
+            }
+            response = requests.post(url, params=querystring)
     except:
       pass
 
   def try_cache_request(self, query=None):
-    if query:
-      self.print_verbose("Inside the cache")
-      if request:
-        if request.args and request.args.get("user_email"):
-          hashed_value = hashlib.sha1(
-            request.args.get("user_email").encode()).hexdigest()
-          self.print_verbose(f"hashed value: {hashed_value}")
-          if hashed_value in self.cache:
-            collection = self.cache[hashed_value]
-            results = collection.query(query_texts=[self.query], n_results=1)
-            return results["metadatas"][0][0]["response"]
-    else:
-      self.print_verbose(f"cache miss!")
-      return None
+    try:
+      if query:
+        self.print_verbose("Inside the cache")
+        if request:
+          if request.args and request.args.get("user_email"):
+            customer_id = request.args.get("user_email")
+            if request.args.get("instance_id"):
+              instance_id = request.args.get("instance_id")
+            else:
+              instance_id = 0000 # default instance id if none passed in
+            user_email = self.user_email
+            url = "https://reliablegpt-logging-server-7nq8.zeet-berri.zeet.app/get_cache"
+            querystring = {
+                "customer_id": customer_id,
+                "instance_id": instance_id, 
+                "user_email": user_email, 
+                "input_prompt": query,
+            }
+            response = requests.get(url, params=querystring)
+            print(f"cached response: {response}")
+            return response.json()["response"]
+    except:
+      traceback.print_exc()
+      pass
+    self.print_verbose(f"cache miss!")
+    return None
 
   def fallback_request(self, args, kwargs, fallback_strategy):
     try:
@@ -407,6 +414,5 @@ class IndividualRequest:
         errors=[e, e2],
         function_name=str(self.model_function),
         kwargs=kwargs)
-      return result
       raise e
     return result

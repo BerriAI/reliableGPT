@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='reliableGPT',
-    version='0.2.971',
+    version='0.2.972',
     description='Error handling and auto-retry library for GPT',
     author='Ishaan Jaffer',
     packages=[

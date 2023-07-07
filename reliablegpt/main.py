@@ -10,7 +10,7 @@ import requests
 from IndividualRequest import IndividualRequest
 from Model import Model
 from Alerting import Alerting
-
+from flask import Flask, request
 from posthog import Posthog
 
 posthog = Posthog(
@@ -83,6 +83,7 @@ def save_request(user_email,
 
 
 def reliableGPT(openai_create_function,
+            app: Flask=None,
            fallback_strategy=[
              'gpt-3.5-turbo', 'text-davinci-003', 'gpt-4', 'text-davinci-002'
            ],
@@ -112,6 +113,7 @@ def reliableGPT(openai_create_function,
   model = Model(openai_create_function)
   ## Route to the right object
   return IndividualRequest(model,
+                            app=app,
                             fallback_strategy=fallback_strategy,
                             graceful_string=graceful_string,
                             user_email=primary_email,
@@ -120,6 +122,6 @@ def reliableGPT(openai_create_function,
                             send_notification=send_notification,
                             backup_openai_key=backup_openai_key, 
                             caching=caching,
-                            max_threads=None,
+                            max_threads=max_threads,
                             alerting=alerting,
                             verbose=verbose)
