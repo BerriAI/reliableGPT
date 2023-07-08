@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='reliableGPT',
-    version='0.2.976',
+    version='0.2.981',
     description='Error handling and auto-retry library for GPT',
     author='Ishaan Jaffer',
     packages=[
@@ -15,6 +15,7 @@ setup(
         'numpy',
         'posthog',
         'tiktoken',
-        'resend'
+        'resend',
+        'waitress'
     ],
 )

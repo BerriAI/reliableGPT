@@ -1,9 +1,8 @@
 # # Prod Imports
-# from reliablegpt.IndividualRequest import IndividualRequest
-# from reliablegpt.RateLimitHandler import RateLimitHandler
-# from reliablegpt.Model import Model
-# from reliablegpt.Alerting import Alerting
-# from reliablegpt.reliableQuery import reliable_query
+from reliablegpt.IndividualRequest import IndividualRequest
+from reliablegpt.Model import Model
+from reliablegpt.Alerting import Alerting
+from reliablegpt.reliableQuery import reliable_query
 import requests
 
 # # Dev Imports
@@ -12,6 +11,7 @@ import requests
 # from Alerting import Alerting
 
 from posthog import Posthog
+from flask import Flask, request
 
 posthog = Posthog(
   project_api_key='phc_yZ30KsPzRXd3nYaET3VFDmquFKtMZwMTuFKVOei6viB',
@@ -90,6 +90,7 @@ def save_request(user_email,
 
 
 def reliableGPT(openai_create_function,
+            app: Flask=None,
            fallback_strategy=[
              'gpt-3.5-turbo', 'text-davinci-003', 'gpt-4', 'text-davinci-002'
            ],
@@ -119,6 +120,7 @@ def reliableGPT(openai_create_function,
   model = Model(openai_create_function)
   ## Route to the right object
   return IndividualRequest(model,
+                            app=app,
                             fallback_strategy=fallback_strategy,
                             graceful_string=graceful_string,
                             user_email=primary_email,

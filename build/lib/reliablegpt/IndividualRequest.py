@@ -1,27 +1,15 @@
 from termcolor import colored
-import time
 import requests
 import copy
 import posthog
-import importlib
 import openai
 from openai import ChatCompletion
 import traceback
-import random
 from uuid import uuid4
-import subprocess
-import importlib
 from waitress import serve
 from flask import Flask, request
-import random
 from uuid import uuid4
-from transformers import AutoTokenizer, AutoModel
-import torch
-import numpy as np
 import traceback
-import hashlib 
-import psutil
-import os 
 from threading import active_count
 
 class IndividualRequest:
@@ -29,6 +17,7 @@ class IndividualRequest:
 
   def __init__(self,
                model=None,
+               app: Flask=None,
                fallback_strategy=[
                  'gpt-3.5-turbo', 'text-davinci-003', 'gpt-4',
                  'text-davinci-002'
@@ -58,6 +47,15 @@ class IndividualRequest:
     self.max_threads = max_threads
     self.print_verbose(f"INIT with threads {self.max_threads} {self.caching} {max_threads}")
     self.alerting = alerting
+    self.app = app
+    if self.app:
+      self.app.register_error_handler(Exception, self.handle_unhandled_exception)
+      self.app.register_error_handler(500, self.handle_unhandled_exception)
+  
+  def handle_unhandled_exception(self, e):
+    self.print_verbose(colored("UNHANDLED EXCEPTION OCCURRED", "red"))
+    if self.alerting:
+      self.alerting.add_error(error_type="Unhandled Exception", error_description=traceback.format_exc())
 
   def print_verbose(self, print_statement):
     if self.verbose:
@@ -93,13 +91,28 @@ class IndividualRequest:
               f"queue depth is higher than the threshold, start caching")
             result = self.try_cache_request(query=input_prompt)
             if self.alerting:
+              # save_exception
               self.alerting.add_error(error_type="Thread Utilization > 85%", error_description="Your thread utilization is over 85%. We've started responding with cached results, to prevent requests from dropping. Please increase capacity (allocate more threads/servers) to prevent result quality from dropping.")
             if result == None: # cache miss!
               pass
             else:
               self.print_verbose(f"returns cached result: {result}")
+              self.save_request(
+                user_email=self.user_email,
+                posthog_event='reliableGPT.recovered_request_cache',
+                graceful_string = self.graceful_string,
+                result=result,
+                posthog_metadata={
+                  'error': 'High Thread Utilization',
+                  'recovered_response': result,
+                },
+                errors=['High Thread Utilization'],
+                function_name=str(self.model_function),
+                kwargs=kwargs
+              )
               return result
-      print("received request")
+      # print("received request")
+      # Run user request
       result = self.model_function(*args, **kwargs)
       if "messages" in kwargs and self.caching:
         print(kwargs["messages"])
@@ -159,8 +172,10 @@ class IndividualRequest:
                 "input_prompt": query,
             }
             response = requests.get(url, params=querystring)
-            print(f"cached response: {response}")
-            return response.json()["response"]
+            self.print_verbose(f"cached response: {response.json()}")
+            extracted_result = response.json()["response"]
+            results = {"choices":[{"message":{"content": extracted_result}}]}
+            return results
     except:
       traceback.print_exc()
       pass

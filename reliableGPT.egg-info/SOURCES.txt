@@ -7,14 +7,9 @@ reliableGPT.egg-info/SOURCES.txt
 reliableGPT.egg-info/dependency_links.txt
 reliableGPT.egg-info/requires.txt
 reliableGPT.egg-info/top_level.txt
-reliablegpt/APICallHandler.py
 reliablegpt/Alerting.py
-reliablegpt/CustomQueue.py
 reliablegpt/IndividualRequest.py
 reliablegpt/Model.py
-reliablegpt/RateLimitHandler.py
-reliablegpt/ReliableDataLoaders.py
 reliablegpt/__init__.py
-reliablegpt/alerting.py
 reliablegpt/main.py
 reliablegpt/reliableQuery.py
