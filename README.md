@@ -2,13 +2,16 @@
 
 ⚡️ Get 0 dropped requests for your LLM app in production ⚡️
 
-**Talk to Founders: Learn more / get help onboarding: [Meeting Scheduling Link](https://calendly.com/d/yr3-9zt-yy4/reliablegpt?month=2023-07)**
-
 When a request to your llm app fails, reliableGPT handles it by:
 * Retrying with an alternate model - GPT-4, GPT3.5, GPT3.5 16k, text-davinci-003
 * Retrying with a larger context window model for Context Window Errors
 * Sending a Cached Response (using semantic similarity)
 * Retry with a fallback API key for Invalid API Key errors 
+
+## Community 
+Join us on [Discord](https://discord.gg/WXFfTeEXRh) or Email us at ishaan@berri.ai & krrish@berri.ai
+**Talk to Founders: Learn more / get help onboarding: [Meeting Scheduling Link](https://calendly.com/d/yr3-9zt-yy4/reliablegpt?month=2023-07)**
+
 
 # Getting Started
 ## Step 1. pip install package
