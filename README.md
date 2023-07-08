@@ -9,8 +9,8 @@ When a request to your llm app fails, reliableGPT handles it by:
 * Retry with a fallback API key for Invalid API Key errors 
 
 ## Community 
-Join us on [Discord](https://discord.gg/WXFfTeEXRh) or Email us at ishaan@berri.ai & krrish@berri.ai
-**Talk to Founders: Learn more / get help onboarding: [Meeting Scheduling Link](https://calendly.com/d/yr3-9zt-yy4/reliablegpt?month=2023-07)**
+* Join us on [Discord](https://discord.gg/WXFfTeEXRh) or Email us at ishaan@berri.ai & krrish@berri.ai
+* **Talk to Founders: Learn more / get help onboarding: [Meeting Scheduling Link](https://calendly.com/d/yr3-9zt-yy4/reliablegpt?month=2023-07)**
 
 
 # Getting Started
