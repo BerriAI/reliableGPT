@@ -1,4 +1,4 @@
-# 💪 reliableGPT: Stop OpenAI Errors in Production 🚀
+# 💪 reliableGPT: Stop failing customer requests for your LLM App 🚀
 
 ⚡️ Get 0 dropped requests for your LLM app in production ⚡️
 
