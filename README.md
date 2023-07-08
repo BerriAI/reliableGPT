@@ -2,7 +2,7 @@
 
 ⚡️ Get 0 dropped requests for your LLM app in production ⚡️
 
-**Schedule a ReliableGPT onboarding meeting with the builders: [Meeting Scheduling Link](https://calendly.com/d/yr3-9zt-yy4/reliablegpt?month=2023-07)**
+**Talk to Founders: Learn more / get help onboarding: [Meeting Scheduling Link](https://calendly.com/d/yr3-9zt-yy4/reliablegpt?month=2023-07)**
 
 When a request to your llm app fails, reliableGPT handles it by:
 * Retrying with an alternate model - GPT-4, GPT3.5, GPT3.5 16k, text-davinci-003
