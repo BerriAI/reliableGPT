@@ -30,7 +30,6 @@ If you experience failure, try
 ```
 pip install reliableGPT==0.2.976
 ```
-Call/Text Ishaan at +14126186238
 
 ## 👉 Code Examples
 * [reliableGPT Getting Started](https://colab.research.google.com/drive/1za1eU6EXLlW4UjHy_YYSc7veDeGTvLON?usp=sharing)
