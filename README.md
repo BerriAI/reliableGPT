@@ -1,4 +1,5 @@
 # 💪 reliableGPT: Stop failing customer requests for your LLM App 🚀
+[![](https://dcbadge.vercel.app/api/server/wuPM9dRgDw)](https://discord.gg/wuPM9dRgDw)
 
 ⚡️ Get 0 dropped requests for your LLM app in production ⚡️
 
