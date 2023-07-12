@@ -29,6 +29,8 @@ class IndividualRequest:
                logging_fn=None,
                backup_openai_key="",
                caching=False,
+               add_cache_func=None,
+               read_cache_func=None,
                alerting=None,
                max_threads=None,
                verbose=False):
@@ -47,6 +49,8 @@ class IndividualRequest:
     self.max_threads = max_threads
     self.print_verbose(f"INIT with threads {self.max_threads} {self.caching} {max_threads}")
     self.alerting = alerting
+    self.add_cache_func = add_cache_func
+    self.read_cache_func = read_cache_func
     self.app = app
     if self.app:
       self.app.register_error_handler(Exception, self.handle_unhandled_exception)
@@ -132,23 +136,27 @@ class IndividualRequest:
   def add_cache(self, input_prompt, response):
     try:
       if self.caching:
-        if request:
-          if request.args and request.args.get("user_email"):
-            customer_id = request.args.get("user_email")
-            if request.args.get("instance_id"):
-              instance_id = request.args.get("instance_id")
-            else:
-              instance_id = 0000 # default instance id if none passed in
-            user_email = self.user_email
-            url = "https://reliablegpt-logging-server-7nq8.zeet-berri.zeet.app/add_cache"
-            querystring = {
-              "customer_id": customer_id,
-              "instance_id": instance_id, 
-              "user_email": user_email, 
-              "input_prompt": input_prompt,
-              "response": response
-            }
-            response = requests.post(url, params=querystring)
+        if self.add_cache_func:
+          self.add_cache_func(input_prompt, response)
+          return
+        else:
+          if request:
+            if request.args and request.args.get("user_email"):
+              customer_id = request.args.get("user_email")
+              if request.args.get("instance_id"):
+                instance_id = request.args.get("instance_id")
+              else:
+                instance_id = 0000 # default instance id if none passed in
+              user_email = self.user_email
+              url = "https://reliablegpt-logging-server-7nq8.zeet-berri.zeet.app/add_cache"
+              querystring = {
+                "customer_id": customer_id,
+                "instance_id": instance_id, 
+                "user_email": user_email, 
+                "input_prompt": input_prompt,
+                "response": response
+              }
+              response = requests.post(url, params=querystring)
     except:
       pass
 
@@ -156,26 +164,30 @@ class IndividualRequest:
     try:
       if query:
         self.print_verbose("Inside the cache")
-        if request:
-          if request.args and request.args.get("user_email"):
-            customer_id = request.args.get("user_email")
-            if request.args.get("instance_id"):
-              instance_id = request.args.get("instance_id")
-            else:
-              instance_id = 0000 # default instance id if none passed in
-            user_email = self.user_email
-            url = "https://reliablegpt-logging-server-7nq8.zeet-berri.zeet.app/get_cache"
-            querystring = {
-                "customer_id": customer_id,
-                "instance_id": instance_id, 
-                "user_email": user_email, 
-                "input_prompt": query,
-            }
-            response = requests.get(url, params=querystring)
-            self.print_verbose(f"cached response: {response.json()}")
-            extracted_result = response.json()["response"]
-            results = {"choices":[{"message":{"content": extracted_result}}]}
-            return results
+        if self.read_cache_func:
+          cache_result = self.read_cache_func(query)
+          return cache_result
+        else:
+          if request:
+            if request.args and request.args.get("user_email"):
+              customer_id = request.args.get("user_email")
+              if request.args.get("instance_id"):
+                instance_id = request.args.get("instance_id")
+              else:
+                instance_id = 0000 # default instance id if none passed in
+              user_email = self.user_email
+              url = "https://reliablegpt-logging-server-7nq8.zeet-berri.zeet.app/get_cache"
+              querystring = {
+                  "customer_id": customer_id,
+                  "instance_id": instance_id, 
+                  "user_email": user_email, 
+                  "input_prompt": query,
+              }
+              response = requests.get(url, params=querystring)
+              self.print_verbose(f"cached response: {response.json()}")
+              extracted_result = response.json()["response"]
+              results = {"choices":[{"message":{"content": extracted_result}}]}
+              return results
     except:
       traceback.print_exc()
       pass
