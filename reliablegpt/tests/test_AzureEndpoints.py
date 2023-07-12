@@ -19,11 +19,10 @@ openai.api_version = "2023-05-15"
 openai.ChatCompletion.create = reliableGPT(
   openai.ChatCompletion.create,
   user_email="krrish@berri.ai",
-  backup_openai_key=os.getenv("OPENAI_API_KEY"), verbose=True)
+  azure_fallback_strategy=["chatgpt-v-2"], _test=True, verbose=True)
 
 def simple_openai_call(prompt):
   print(f"in simple openai call with question:  {prompt}")
-  model = "gpt-4"
   engine="chatgpt-test"
   messages = [
     {
@@ -35,22 +34,25 @@ def simple_openai_call(prompt):
       "content": prompt
     },
   ]
-  result = openai.ChatCompletion.create(model=model, engine=engine, messages=messages)
+  result = openai.ChatCompletion.create(engine=engine, messages=messages)
   print(f"Result: from open ai for {prompt}, result {result}")
   return result
 
 list_questions = [
   "what do you know?", 
-  "who is jacky robinson?"
+  "who is jacky robinson?",
+  "what do you know?",
+  "what do you know?",
+  "what do you know?",
 ]
 
 
 #bad key
-openai.api_key = "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"
+# openai.api_key = "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"
 
-for question in list_questions:
-  response = simple_openai_call(question)
-  print(response)
+# for question in list_questions:
+#   response = simple_openai_call(question)
+#   print(response)
 
 #good key
 openai.api_key = os.getenv("AZURE_OPENAI_KEY")

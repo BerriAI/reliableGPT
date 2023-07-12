@@ -2,7 +2,6 @@
 from reliablegpt.IndividualRequest import IndividualRequest
 from reliablegpt.Model import Model
 from reliablegpt.Alerting import Alerting
-from reliablegpt.reliableQuery import reliable_query
 import requests
 
 # # Dev Imports
@@ -90,10 +89,10 @@ def save_request(user_email,
 
 
 def reliableGPT(openai_create_function,
-            app: Flask=None,
            fallback_strategy=[
              'gpt-3.5-turbo', 'text-davinci-003', 'gpt-4', 'text-davinci-002'
            ],
+           azure_fallback_strategy=None,
            graceful_string="Sorry, the OpenAI API is currently down",
            user_email="",
            user_token="",
@@ -101,6 +100,7 @@ def reliableGPT(openai_create_function,
            caching=False,
            max_threads=None,
            backup_openai_key=None,
+           _test=False,
            verbose=False):
   """Determine if an instantiation is calling the rate limit handler or the individual request wrapper directly and return the correct object"""
 
@@ -120,8 +120,8 @@ def reliableGPT(openai_create_function,
   model = Model(openai_create_function)
   ## Route to the right object
   return IndividualRequest(model,
-                            app=app,
                             fallback_strategy=fallback_strategy,
+                            azure_fallback_strategy=azure_fallback_strategy,
                             graceful_string=graceful_string,
                             user_email=primary_email,
                             user_token=user_token,
@@ -131,4 +131,5 @@ def reliableGPT(openai_create_function,
                             caching=caching,
                             max_threads=max_threads,
                             alerting=alerting,
+                            _test=_test,
                             verbose=verbose)

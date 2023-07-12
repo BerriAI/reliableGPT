@@ -11,17 +11,24 @@ from flask import Flask, request
 from uuid import uuid4
 import traceback
 from threading import active_count
+import random 
+
+## for testing
+class CustomError(Exception):
+    def __init__(self, error):
+        self.error = error
+
 
 class IndividualRequest:
   """A brief description of the class."""
 
   def __init__(self,
                model=None,
-               app: Flask=None,
                fallback_strategy=[
                  'gpt-3.5-turbo', 'text-davinci-003', 'gpt-4',
                  'text-davinci-002'
                ],
+               azure_fallback_strategy=None,
                graceful_string="Sorry, the OpenAI API is currently down",
                user_email="",
                user_token="",
@@ -31,6 +38,7 @@ class IndividualRequest:
                caching=False,
                alerting=None,
                max_threads=None,
+               _test=False,
                verbose=False):
     # Initialize instance variables
     self.model = model
@@ -42,16 +50,14 @@ class IndividualRequest:
     self.user_token = user_token
     self.save_request = logging_fn
     self.backup_openai_key = backup_openai_key
+    self._test = _test
     self.print_verbose(f"INIT fallback strategy {self.fallback_strategy}")
     self.caching = caching
     self.max_threads = max_threads
     self.print_verbose(f"INIT with threads {self.max_threads} {self.caching} {max_threads}")
     self.alerting = alerting
-    self.app = app
-    if self.app:
-      self.app.register_error_handler(Exception, self.handle_unhandled_exception)
-      self.app.register_error_handler(500, self.handle_unhandled_exception)
-  
+    self.azure_fallback_strategy = azure_fallback_strategy
+
   def handle_unhandled_exception(self, e):
     self.print_verbose(colored("UNHANDLED EXCEPTION OCCURRED", "red"))
     if self.alerting:
@@ -67,6 +73,7 @@ class IndividualRequest:
       self.print_verbose(f"calling model function: {self.model_function}")
       self.print_verbose(f"these are the kwargs: {kwargs}")
       self.print_verbose(f"this is the openai api base: {openai.api_base}")
+      self.print_verbose(f"testing enabled: {self._test}")
       try:
         # this should never block running the openai call
         # [TODO] make this into a threaded call to reduce impact on latency
@@ -78,6 +85,9 @@ class IndividualRequest:
       except:
         print("ReliableGPT error occured during saving request")
       self.print_verbose(f"max threads: {self.max_threads}, caching: {self.caching}")
+      if self._test:
+        error = {"type": "RandomError"}
+        raise CustomError(error)
       if self.max_threads and self.caching:
         self.print_verbose(f'current util: {active_count()/self.max_threads}')
         thread_utilization = active_count()/self.max_threads
@@ -196,6 +206,14 @@ class IndividualRequest:
         if "Embedding" in str(self.model_function):
           fallback_strategy = ["text-embedding-ada-002"]
 
+      if self.azure_fallback_strategy: # try backup azure models
+        for engine in self.azure_fallback_strategy:
+          new_kwargs["engine"] = engine
+          self.print_verbose(f"new azure engine: {new_kwargs}")
+          result = self.make_LLM_request(new_kwargs)
+          if result != None:
+            return result
+        
       for model in fallback_strategy:
         new_kwargs['model'] = model  # Update the model
         result = self.make_LLM_request(new_kwargs)
@@ -212,6 +230,8 @@ class IndividualRequest:
     completion_model = self.model.get_original_completion()
     try:
       self.print_verbose(f"{new_kwargs.keys()}")
+      if "engine" in new_kwargs:
+        return chat_model(**new_kwargs)
       if "openai2" in new_kwargs:
         openai.api_type = "openai"
         openai.api_base = "https://api.openai.com/v1"

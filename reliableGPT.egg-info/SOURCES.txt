@@ -12,4 +12,3 @@ reliablegpt/IndividualRequest.py
 reliablegpt/Model.py
 reliablegpt/__init__.py
 reliablegpt/main.py
-reliablegpt/reliableQuery.py
