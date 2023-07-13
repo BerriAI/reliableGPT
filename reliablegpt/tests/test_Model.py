@@ -1,14 +1,16 @@
 import sys
-sys.path.append('..')
+
+sys.path.append("..")
 import os
 
-import dotenv
 from dotenv import load_dotenv
+
 load_dotenv()
 
-import openai 
+import openai
 from Model import Model
-openai.api_key = os.getenv('OPENAI_API_KEY')
+
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 
 obj = Model(openai.ChatCompletion.create)
