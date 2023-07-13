@@ -12,6 +12,9 @@ from uuid import uuid4
 import traceback
 from threading import active_count
 import random 
+import time 
+import asyncio 
+import signal
 
 ## for testing
 class CustomError(Exception):
@@ -57,6 +60,9 @@ class IndividualRequest:
     self.print_verbose(f"INIT with threads {self.max_threads} {self.caching} {max_threads}")
     self.alerting = alerting
     self.azure_fallback_strategy = azure_fallback_strategy
+    self.backup_model = None
+    self.set_cooldown = False
+    self.cooldown_start_time = time.time()
 
   def handle_unhandled_exception(self, e):
     self.print_verbose(colored("UNHANDLED EXCEPTION OCCURRED", "red"))
@@ -66,6 +72,77 @@ class IndividualRequest:
   def print_verbose(self, print_statement):
     if self.verbose:
       print(colored("Individual Request: " + print_statement, "blue"))
+
+  def start_cooldown(self):
+    self.set_cooldown = True
+    self.cooldown_start_time = time.time()
+
+  def call_model(self, args, kwargs):
+    try: 
+      if self._test: # private function for testing package
+        error = {"type": "RandomError"}
+        raise CustomError(error)
+      if self.set_cooldown:
+        if time.time() - self.cooldown_start_time > 900: # endpoint is being cooled down for 15 minutes, default to fallbacks
+          error = {"type": "ErrorCooldown"}
+          raise(CustomError(error=error))
+        else:
+          self.set_cooldown = False
+      result = self.model_function(*args, **kwargs)
+      if result == None:
+        error = {"type": f"OpenAI Endpoint {self.model_function} returned None"}
+        raise CustomError(error)
+      if "messages" in kwargs:
+        if "engine" in kwargs:
+          self.curr_azure_model = kwargs["engine"]
+        if self.caching:
+          self.print_verbose(kwargs["messages"])
+          input_prompt = "\n".join(message["content"]
+                                  for message in kwargs["messages"])
+          extracted_result = result['choices'][0]['message']['content']
+          self.print_verbose(f'This is extracted result {extracted_result}')
+          self.add_cache(
+            input_prompt, extracted_result
+          )  # [TODO] turn this into a threaded call, reduce latency.
+        self.print_verbose(f"This is the result: {str(result)[:500]}")
+      return result
+    except Exception as e:
+      self.print_verbose(f"Error: {traceback.format_exc()}")
+      self.print_verbose("catches the error")
+      self.start_cooldown()
+      return self.handle_exception(args, kwargs, e)
+    
+  async def async_call_model(self, args, kwargs):
+    try: 
+      if self._test: # private function for testing package
+        error = {"type": "RandomError in async function"}
+        raise CustomError(error)
+      if self.set_cooldown:
+        if time.time() - self.cooldown_start_time > 900: # endpoint is being cooled down for 15 minutes
+          error = {"type": "ErrorCooldown"}
+          raise(CustomError(error=error))
+        else:
+          self.set_cooldown = False
+      result = await self.model_function(*args, **kwargs)
+      if "messages" in kwargs:
+        if "engine" in kwargs:
+          self.curr_azure_model = kwargs["engine"]
+        if self.caching:
+          self.print_verbose(kwargs["messages"])
+          input_prompt = "\n".join(message["content"]
+                                  for message in kwargs["messages"])
+          extracted_result = result['choices'][0]['message']['content']
+          self.print_verbose(f'This is extracted result {extracted_result}')
+          self.add_cache(
+            input_prompt, extracted_result
+          )  # [TODO] turn this into a threaded call, reduce latency.
+        self.print_verbose(f"This is the result: {str(result)[:500]}")
+      return result
+    except Exception as e:
+      self.print_verbose("catches the error")
+      self.start_cooldown()
+      return self.handle_exception(args, kwargs, e)
+
 
   ## Code that handles / wraps openai calls
   def __call__(self, *args, **kwargs):
@@ -83,18 +160,15 @@ class IndividualRequest:
           posthog_event='reliableGPT.request',
         )
       except:
-        print("ReliableGPT error occured during saving request")
+        self.print_verbose("ReliableGPT error occured during saving request")
       self.print_verbose(f"max threads: {self.max_threads}, caching: {self.caching}")
-      if self._test:
-        error = {"type": "RandomError"}
-        raise CustomError(error)
       if self.max_threads and self.caching:
         self.print_verbose(f'current util: {active_count()/self.max_threads}')
         thread_utilization = active_count()/self.max_threads
         self.print_verbose(f"Thread utilization: {thread_utilization}")
         if thread_utilization > 0.8: # over 80% utilization of threads, start returning cached responses
           if "messages" in kwargs and self.caching:
-            print(kwargs["messages"])
+            self.print_verbose(kwargs["messages"])
             input_prompt = "\n".join(message["content"]
                                     for message in kwargs["messages"])
             self.print_verbose(
@@ -121,23 +195,14 @@ class IndividualRequest:
                 kwargs=kwargs
               )
               return result
-      # print("received request")
+      
       # Run user request
-      result = self.model_function(*args, **kwargs)
-      if "messages" in kwargs and self.caching:
-        print(kwargs["messages"])
-        input_prompt = "\n".join(message["content"]
-                                 for message in kwargs["messages"])
-        extracted_result = result['choices'][0]['message']['content']
-        self.print_verbose(f'This is extracted result {extracted_result}')
-        self.add_cache(
-          input_prompt, extracted_result
-        )  # [TODO] turn this into a threaded call, reduce latency.
-      self.print_verbose(f"This is the result: {str(result)[:500]}")
-      return result
+      if asyncio.iscoroutinefunction(self.model_function):
+        return self.async_call_model(args=args, kwargs=kwargs)
+      else:
+        return self.call_model(args=args, kwargs=kwargs)
     except Exception as e:
-      self.print_verbose("catches the error")
-      return self.handle_exception(args, kwargs, e)
+      self.print_verbose(f"Error in main call function: {traceback.format_exc()}")
 
   def add_cache(self, input_prompt, response):
     try:
@@ -209,6 +274,7 @@ class IndividualRequest:
       if self.azure_fallback_strategy: # try backup azure models
         for engine in self.azure_fallback_strategy:
           new_kwargs["engine"] = engine
+          new_kwargs["azure_fallback"] = True
           self.print_verbose(f"new azure engine: {new_kwargs}")
           result = self.make_LLM_request(new_kwargs)
           if result != None:
@@ -230,8 +296,12 @@ class IndividualRequest:
     completion_model = self.model.get_original_completion()
     try:
       self.print_verbose(f"{new_kwargs.keys()}")
-      if "engine" in new_kwargs:
-        return chat_model(**new_kwargs)
+      if "azure_fallback" in new_kwargs:
+        new_kwargs_except_azure_fallback_flag = {
+          k: v
+          for k, v in new_kwargs.items() if k != "azure_fallback"
+        }
+        return chat_model(**new_kwargs_except_azure_fallback_flag)
       if "openai2" in new_kwargs:
         openai.api_type = "openai"
         openai.api_base = "https://api.openai.com/v1"
@@ -254,21 +324,21 @@ class IndividualRequest:
         return completion
       if "embedding" in str(self.model_function):
         # retry embedding with diff key
-        print(colored(f"ReliableGPT: Retrying Embedding request", "blue"))
+        self.print_verbose(colored(f"ReliableGPT: Retrying Embedding request", "blue"))
         return embedding_model(**new_kwargs)
 
       model = str(new_kwargs['model'])
-      print(
+      self.print_verbose(
         colored(f"ReliableGPT: Checking request model {model} {new_kwargs}",
                 "blue"))
       if "3.5" in model or "4" in model:  # call ChatCompletion
-        print(
+        self.print_verbose(
           colored(
             f"ReliableGPT: Retrying request with model CHAT {model} {new_kwargs}",
             "blue"))
         return chat_model(**new_kwargs)
       else:
-        print(
+        self.print_verbose(
           colored(f"ReliableGPT: Retrying request with model TEXT {model}",
                   "blue"))
         new_kwargs['prompt'] = " ".join(
@@ -277,7 +347,7 @@ class IndividualRequest:
                        None)  # remove messages for completion models
         return completion_model(**new_kwargs)
     except Exception as e:
-      print(colored(f"ReliableGPT: Got 2nd AGAIN Error {e}", "red"))
+      self.print_verbose(colored(f"ReliableGPT: Got 2nd AGAIN Error {e}", "red"))
       raise ValueError(e)
 
   def api_key_handler(self, args, kwargs, fallback_strategy, user_email,
@@ -288,7 +358,7 @@ class IndividualRequest:
       if response.status_code == 200:
         result = response.json()
         if result['status'] == 'failed':
-          print(
+          self.print_verbose(
             colored(
               f"ReliableGPT: No keys found for user: {user_email}, token: {user_token}",
               "red"))
@@ -304,7 +374,7 @@ class IndividualRequest:
           if result != None:
             return result
       else:
-        print(
+        self.print_verbose(
           colored(
             f"ReliableGPT: No keys found for user: {user_email}, token: {user_token}",
             "red"))
@@ -340,7 +410,7 @@ class IndividualRequest:
     if error_type == 'invalid_request_error' or error_type == 'InvalidRequestError':
       # check if this is context window related, try with a 16k model
       if openAI_error.code == 'context_length_exceeded':
-        print(
+        self.print_verbose(
           colored(
             "ReliableGPT: invalid request error - context_length_exceeded",
             "red"))
@@ -353,7 +423,7 @@ class IndividualRequest:
         else:
           return result
       if openAI_error.code == "invalid_api_key":
-        print(
+        self.print_verbose(
           colored("ReliableGPT: invalid request error - invalid_api_key",
                   "red"))
         result = self.api_key_handler(args=args,
@@ -368,7 +438,7 @@ class IndividualRequest:
 
     # todo: alert on user_email that there is now an auth error
     elif error_type == 'authentication_error' or error_type == 'AuthenticationError':
-      print(colored("ReliableGPT: Auth error", "red"))
+      self.print_verbose(colored("ReliableGPT: Auth error", "red"))
       return graceful_string
 
     # catch all
@@ -394,14 +464,13 @@ class IndividualRequest:
         graceful_string=self.graceful_string,
         user_email=self.user_email,
         user_token=self.user_token)
-      print(f"result: {result}")
       self.print_verbose(
         colored(f"ReliableGPT: Recovered got a successful response {result}",
                 "green"))
       if result == self.graceful_string:
         # did a retry with model fallback, so now try caching.
         if "messages" in kwargs and self.caching:
-          print(kwargs["messages"])
+          self.print_verbose(kwargs["messages"])
           input_prompt = "\n".join(message["content"]
                                    for message in kwargs["messages"])
           cached_response = self.try_cache_request(query=input_prompt)
@@ -422,7 +491,6 @@ class IndividualRequest:
               kwargs=kwargs
             )
             return cached_response
-        print("returns graceful string")
         self.save_request(
           user_email=self.user_email,
           graceful_string=self.graceful_string,
@@ -451,7 +519,7 @@ class IndividualRequest:
     except Exception as e2:
       # Exception 2, After trying to rescue
       traceback.print_exc()
-      print("gets 2nd error: ", e2)
+      self.print_verbose("gets 2nd error: ", e2)
       self.save_request(
         user_email=self.user_email,
         graceful_string=self.graceful_string,

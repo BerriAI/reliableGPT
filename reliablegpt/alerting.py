@@ -16,7 +16,7 @@ class Alerting:
     }  # dictionary of openai errors + frequency count for that hour
     now = datetime.datetime.now()
     self.current_time_block = now.hour
-    self.set_cooldown = False
+    self.set_cooldown = True
     self.cooldown_start_time = time.time()
     self.send_notifications = send_notifications
     self.user_emails = user_emails

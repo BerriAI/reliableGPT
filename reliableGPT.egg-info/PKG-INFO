@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: reliableGPT
-Version: 0.2.983
+Version: 0.2.989
 Summary: Error handling and auto-retry library for GPT
 Author: Ishaan Jaffer
 License-File: LICENSE
