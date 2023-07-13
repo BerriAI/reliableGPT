@@ -71,7 +71,7 @@ class IndividualRequest:
 
   def print_verbose(self, print_statement):
     if self.verbose:
-      print(colored("Individual Request: " + print_statement, "blue"))
+      print(colored("Individual Request: " + str(print_statement), "blue"))
 
   def start_cooldown(self):
     self.set_cooldown = True
@@ -90,6 +90,8 @@ class IndividualRequest:
           self.set_cooldown = False
       result = self.model_function(*args, **kwargs)
       if result == None:
+        self.print_verbose(f"None result!")
+        return
         error = {"type": f"OpenAI Endpoint {self.model_function} returned None"}
         raise CustomError(error)
       if "messages" in kwargs:
