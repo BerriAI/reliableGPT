@@ -1,14 +1,15 @@
+import os
 import sys
 
-sys.path.append("..")
-import os
-
+import openai
 from dotenv import load_dotenv
+
+from reliablegpt.model import Model
 
 load_dotenv()
 
-import openai
-from reliablegpt.model import Model
+sys.path.append("..")
+
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 

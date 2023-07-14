@@ -8,7 +8,8 @@ ruff:
 	poetry run ruff check . --fix
 
 isort:
-	poetry run isort ./
+	poetry run isort .
+
 
 lint:
 	make black

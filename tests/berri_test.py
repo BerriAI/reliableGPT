@@ -1,13 +1,14 @@
 import os
 import sys
 
+import openai
 from dotenv import load_dotenv
+
+from reliablegpt.main import reliableGPT
 
 load_dotenv()
 
 sys.path.append("..")  # Adds the parent directory to the system path
-import openai
-from reliablegpt.main import reliableGPT
 
 openai.ChatCompletion.create = reliableGPT(
     openai.ChatCompletion.create,

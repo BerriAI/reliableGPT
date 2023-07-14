@@ -1,3 +1,4 @@
+import os
 import sys
 import traceback
 
@@ -5,13 +6,12 @@ import openai
 from dotenv import load_dotenv
 from flask import Flask
 
+from reliablegpt.main import reliableGPT
+
 load_dotenv()
 
 sys.path.append("../..")  # Adds the parent directory to the system path
-import os
 
-import openai
-from reliablegpt.main import reliableGPT
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
@@ -41,7 +41,7 @@ def test_fn():
         )
         print(f"ENDPOINT RETURNED RESULT: {result}")
         return result
-    except:
+    except BaseException:
         traceback.print_exc()
         return "Error", 500
 

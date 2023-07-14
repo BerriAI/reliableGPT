@@ -1,6 +1,7 @@
 # # Prod Imports
 import requests
 from flask import Flask
+
 # # Dev Imports
 # from IndividualRequest import IndividualRequest
 # from reliablegpt.model import Model
@@ -116,7 +117,7 @@ def save_request(
             for error in errors:
                 alerting.add_error(error)
             # send_emails_task(self.user_email, posthog_metadata, self.send_notification)
-    except:
+    except BaseException:
         return  # safe function, should not impact error handling if logging fails
 
 
@@ -140,7 +141,8 @@ def reliableGPT(
     backup_openai_key=None,
     verbose=False,
 ):
-    """Determine if an instantiation is calling the rate limit handler or the individual request wrapper directly and return the correct object"""
+    """Determine if an instantiation is calling the rate limit handler
+    or the individual request wrapper directly and return the correct object"""
 
     primary_email = ""  # which api key management is mapped to
     ## Add email for alerting

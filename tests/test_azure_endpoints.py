@@ -1,15 +1,18 @@
-# have the router (which is reliableGPT) determine if an instantiation is calling the rate limit handler or the individual request wrapper directly
+# have the router (which is reliableGPT) determine if an instantiation is calling
+# the rate limit handler or the individual request wrapper directly
 # save the original references of a model in model.py -> like a Model Card
 import os
 import sys
 
+import openai
 from dotenv import load_dotenv
+
+from reliablegpt.main import reliableGPT
 
 load_dotenv()
 
 sys.path.append("..")  # Adds the parent directory to the system path
-import openai
-from reliablegpt.main import reliableGPT
+
 
 ## Test Azure / OpenAI Fallback
 openai.api_type = "azure"

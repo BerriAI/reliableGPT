@@ -16,6 +16,7 @@ termcolor = "2.3.0"
 resend = "0.5.1"
 tiktoken = "^0.4.0"
 posthog = "^3.0.1"
+isort = "^5.12.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest-cov = "^4.1.0"
