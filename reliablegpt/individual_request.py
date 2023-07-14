@@ -99,7 +99,10 @@ class IndividualRequest:
                             # save_exception
                             self.alerting.add_error(
                                 error_type="Thread Utilization > 85%",
-                                error_description="Your thread utilization is over 85%. We've started responding with cached results, to prevent requests from dropping. Please increase capacity (allocate more threads/servers) to prevent result quality from dropping.",
+                                error_description="Your thread utilization is over 85%. \
+                                    We've started responding with cached results, to prevent requests from dropping. \
+                                    Please increase capacity (allocate more threads/servers) \
+                                    to prevent result quality from dropping.",
                             )
                         if result is None:  # cache miss!
                             pass

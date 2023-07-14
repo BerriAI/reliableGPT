@@ -71,9 +71,6 @@ exclude = [
     "*migrations*",
 ]
 
-[tool.ruff.isort]
-section-order = ["fastapi", "future", "standard-library", "third-party",  "first-party", "local-folder"]
-
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"

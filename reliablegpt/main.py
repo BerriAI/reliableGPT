@@ -1,7 +1,6 @@
 # # Prod Imports
 import requests
 from flask import Flask
-
 # # Dev Imports
 # from IndividualRequest import IndividualRequest
 # from Model import Model
@@ -9,8 +8,8 @@ from flask import Flask
 from posthog import Posthog
 
 from reliablegpt.Alerting import Alerting
-from reliablegpt.IndividualRequest import IndividualRequest
-from reliablegpt.Model import Model
+from reliablegpt.individual_request import IndividualRequest
+from reliablegpt.model import Model
 
 posthog = Posthog(
     project_api_key="phc_yZ30KsPzRXd3nYaET3VFDmquFKtMZwMTuFKVOei6viB",
