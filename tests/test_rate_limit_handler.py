@@ -12,7 +12,7 @@ import os
 import time
 
 import openai
-from main import reliableGPT
+from reliablegpt.main import reliableGPT
 
 good_open_ai_api_key = os.getenv("OPENAI_API_KEY")
 

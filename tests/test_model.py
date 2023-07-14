@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import openai
-from Model import Model
+from reliablegpt.model import Model
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 

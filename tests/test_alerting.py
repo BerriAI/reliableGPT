@@ -3,7 +3,7 @@ import sys
 sys.path.append("..")
 
 import openai
-from main import reliableGPT
+from reliablegpt.main import reliableGPT
 
 openai.api_key = "gmmm"  # give a bad key with no other alternatives
 openai.ChatCompletion.create = reliableGPT(
