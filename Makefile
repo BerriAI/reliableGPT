@@ -7,9 +7,13 @@ black:
 ruff:
 	poetry run ruff check . --fix
 
+isort:
+	poetry run isort ./
+
 lint:
 	make black
-	make ruff
+	make ruff 
+	make isort
 
 pre-commit:
 	pre-commit run --all-files
