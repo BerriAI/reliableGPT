@@ -50,45 +50,44 @@ def save_request(user_email,
                  result="",
                  posthog_metadata={},
                  errors=[], function_name="", kwargs={}):
-  pass
-  # try:
-  #   if posthog_event != "":
-  #     posthog.capture(user_email, posthog_event,
-  #                     posthog_metadata)  # save posthog event
-      
-  #     # Log handled and unahndled exceptions in R-GPT servers
-  #     if posthog_event == 'reliableGPT.recovered_request':
-  #       original_error = ""
-  #       if 'error' in posthog_metadata:
-  #         original_error = posthog_metadata['error']
-  #       save_exception(type = 'handled', user_email=user_email, result=result, original_error=original_error, function_name=function_name, kwargs=kwargs)
+  try:
+    if posthog_event != "":
+      posthog.capture(user_email, posthog_event,
+                      posthog_metadata)  # save posthog event
 
-  #     # Log handled and unahndled exceptions in R-GPT servers
-  #     if posthog_event == 'reliableGPT.recovered_request_cache':
-  #       original_error = ""
-  #       if 'error' in posthog_metadata:
-  #         original_error = posthog_metadata['error']
-  #       save_exception(type = 'handled cache', user_email=user_email, result=result, original_error=original_error, function_name=function_name, kwargs=kwargs)
+      # Log handled and unahndled exceptions in R-GPT servers
+      if posthog_event == 'reliableGPT.recovered_request':
+        original_error = ""
+        if 'error' in posthog_metadata:
+          original_error = posthog_metadata['error']
+        save_exception(type = 'handled', user_email=user_email, result=result, original_error=original_error, function_name=function_name, kwargs=kwargs)
 
-  #     # Log unhandled exceptions in R-GPT servers
-  #     if posthog_event == 'reliableGPT.recovered_request_exception':
-  #       original_error = ""
-  #       error2 = ""
-  #       if 'error' in posthog_metadata:
-  #         original_error = posthog_metadata['error']
-  #       if 'error2' in posthog_metadata:
-  #         error2 = posthog_metadata['error2']
-  #       save_exception(type = 'unhandled', user_email=user_email, result=result, original_error=original_error, error2=error2, function_name=function_name, kwargs=kwargs)
-      
-  #   if result == graceful_string or len(
-  #       errors) == 2:  # returns a graceful string or got a 2nd exception
-  #     # send an email and alert
-  #     for error in errors:
-  #       alerting.add_error(error)
-  #     # send_emails_task(self.user_email, posthog_metadata, self.send_notification)
-  # except:
-  #   pass
-    # return  # safe function, should not impact error handling if logging fails
+      # Log handled and unahndled exceptions in R-GPT servers
+      if posthog_event == 'reliableGPT.recovered_request_cache':
+        original_error = ""
+        if 'error' in posthog_metadata:
+          original_error = posthog_metadata['error']
+        save_exception(type = 'handled cache', user_email=user_email, result=result, original_error=original_error, function_name=function_name, kwargs=kwargs)
+
+      # Log unhandled exceptions in R-GPT servers
+      if posthog_event == 'reliableGPT.recovered_request_exception':
+        original_error = ""
+        error2 = ""
+        if 'error' in posthog_metadata:
+          original_error = posthog_metadata['error']
+        if 'error2' in posthog_metadata:
+          error2 = posthog_metadata['error2']
+        save_exception(type = 'unhandled', user_email=user_email, result=result, original_error=original_error, error2=error2, function_name=function_name, kwargs=kwargs)
+
+    if result == graceful_string or len(
+        errors) == 2:  # returns a graceful string or got a 2nd exception
+      # send an email and alert
+      for error in errors:
+        alerting.add_error(error)
+      # send_emails_task(self.user_email, posthog_metadata, self.send_notification)
+  except:
+    pass
+    return  # safe function, should not impact error handling if logging fails
 
 
 def reliableGPT(openai_create_function,

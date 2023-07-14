@@ -12,4 +12,5 @@ reliablegpt/CacheDecorator.py
 reliablegpt/IndividualRequest.py
 reliablegpt/Model.py
 reliablegpt/__init__.py
+reliablegpt/alerting.py
 reliablegpt/main.py
