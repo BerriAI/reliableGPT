@@ -1,7 +1,7 @@
 import sys
 
 import openai
-from main import reliableGPT
+from reliablegpt.main import reliableGPT
 
 sys.path.append("..")
 

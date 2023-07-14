@@ -7,10 +7,11 @@ import time
 
 import openai
 from dotenv import load_dotenv
-from main import reliableGPT
+from reliablegpt.main import reliableGPT
 
 sys.path.append("..")
 load_dotenv()
+
 
 
 good_open_ai_api_key = os.getenv("OPENAI_API_KEY")

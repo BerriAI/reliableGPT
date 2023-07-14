@@ -1,7 +1,7 @@
 import sys
 
 import openai
-from main import reliableGPT
+from reliablegpt.main import reliableGPT
 
 sys.path.append("..")
 openai.api_key = "gmmm"  # give a bad key with no other alternatives

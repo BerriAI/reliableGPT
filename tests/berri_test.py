@@ -3,12 +3,11 @@ import sys
 
 import openai
 from dotenv import load_dotenv
-from main import reliableGPT
+from reliablegpt.main import reliableGPT
 
 load_dotenv()
 
 sys.path.append("..")  # Adds the parent directory to the system path
-
 
 openai.ChatCompletion.create = reliableGPT(
     openai.ChatCompletion.create,

@@ -3,11 +3,12 @@ import sys
 
 import openai
 from dotenv import load_dotenv
-from Model import Model
+from reliablegpt.model import Model
 
 load_dotenv()
 
 sys.path.append("..")
+
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 

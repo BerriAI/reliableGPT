@@ -5,11 +5,12 @@ import traceback
 import openai
 from dotenv import load_dotenv
 from flask import Flask
-from main import reliableGPT
+from reliablegpt.main import reliableGPT
 
 load_dotenv()
 
 sys.path.append("../..")  # Adds the parent directory to the system path
+
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 

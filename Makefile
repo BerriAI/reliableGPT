@@ -10,6 +10,7 @@ ruff:
 isort:
 	poetry run isort .
 
+
 lint:
 	make black
 	make ruff 
