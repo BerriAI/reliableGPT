@@ -1,8 +1,0 @@
-openai
-termcolor
-klotty
-numpy
-posthog
-tiktoken
-resend
-waitress
