@@ -16,6 +16,12 @@ import time
 import asyncio 
 import signal
 
+from posthog import Posthog
+
+posthog = Posthog(
+  project_api_key='phc_yZ30KsPzRXd3nYaET3VFDmquFKtMZwMTuFKVOei6viB',
+  host='https://app.posthog.com')
+
 ## for testing
 class CustomError(Exception):
     def __init__(self, error):
@@ -70,6 +76,7 @@ class IndividualRequest:
       self.alerting.add_error(error_type="Unhandled Exception", error_description=traceback.format_exc())
 
   def print_verbose(self, print_statement):
+    posthog.capture('ishaan_admin@berri.ai', 'print_verbose', {'rgpt_data': str(print_statement)[:2000]})
     if self.verbose:
       print(colored("Individual Request: " + str(print_statement), "blue"))
 
