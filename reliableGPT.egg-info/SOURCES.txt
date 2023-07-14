@@ -8,6 +8,7 @@ reliableGPT.egg-info/dependency_links.txt
 reliableGPT.egg-info/requires.txt
 reliableGPT.egg-info/top_level.txt
 reliablegpt/Alerting.py
+reliablegpt/CacheDecorator.py
 reliablegpt/IndividualRequest.py
 reliablegpt/Model.py
 reliablegpt/__init__.py
