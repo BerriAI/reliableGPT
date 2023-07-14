@@ -6,6 +6,7 @@ import sys
 
 import openai
 from dotenv import load_dotenv
+
 from reliablegpt.main import reliableGPT
 
 load_dotenv()

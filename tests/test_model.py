@@ -3,6 +3,7 @@ import sys
 
 import openai
 from dotenv import load_dotenv
+
 from reliablegpt.model import Model
 
 load_dotenv()
