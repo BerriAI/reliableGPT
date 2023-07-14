@@ -3,11 +3,11 @@ import requests
 from flask import Flask
 # # Dev Imports
 # from IndividualRequest import IndividualRequest
-# from Model import Model
+# from reliablegpt.model import Model
 # from Alerting import Alerting
 from posthog import Posthog
 
-from reliablegpt.Alerting import Alerting
+from reliablegpt.alerting import Alerting
 from reliablegpt.individual_request import IndividualRequest
 from reliablegpt.model import Model
 

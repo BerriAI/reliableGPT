@@ -11,7 +11,7 @@ sys.path.append("..")  # Adds the parent directory to the system path
 import concurrent.futures
 
 import openai
-from main import reliableGPT
+from reliablegpt.main import reliableGPT
 
 openai.ChatCompletion.create = reliableGPT(openai.ChatCompletion.create, user_email="krrish@berri.ai", verbose=True)
 
