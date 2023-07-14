@@ -1,17 +1,18 @@
-# have the router (which is reliableGPT) determine if an instantiation is calling the rate limit handler or the individual request wrapper directly
+# have the router (which is reliableGPT) determine if an instantiation is calling
+# the rate limit handler or the individual request wrapper directly
 # save the original references of a model in model.py -> like a Model Card
+import concurrent.futures
 import os
 import sys
 
+import openai
 from dotenv import load_dotenv
+from main import reliableGPT
 
 load_dotenv()
 
 sys.path.append("..")  # Adds the parent directory to the system path
-import concurrent.futures
 
-import openai
-from main import reliableGPT
 
 openai.ChatCompletion.create = reliableGPT(openai.ChatCompletion.create, user_email="krrish@berri.ai", verbose=True)
 

@@ -82,7 +82,7 @@ class IndividualRequest:
                     graceful_string=self.graceful_string,
                     posthog_event="reliableGPT.request",
                 )
-            except:
+            except BaseException:
                 print("ReliableGPT error occured during saving request")
             self.print_verbose(f"max threads: {self.max_threads}, caching: {self.caching}")
             if self.max_threads and self.caching:
@@ -99,7 +99,10 @@ class IndividualRequest:
                             # save_exception
                             self.alerting.add_error(
                                 error_type="Thread Utilization > 85%",
-                                error_description="Your thread utilization is over 85%. We've started responding with cached results, to prevent requests from dropping. Please increase capacity (allocate more threads/servers) to prevent result quality from dropping.",
+                                error_description="Your thread utilization is over 85%. \
+                                    We've started responding with cached results, to prevent requests from dropping. \
+                                    Please increase capacity (allocate more threads/servers) \
+                                    to prevent result quality from dropping.",
                             )
                         if result is None:  # cache miss!
                             pass
@@ -158,7 +161,7 @@ class IndividualRequest:
                                 "response": response,
                             }
                             response = requests.post(url, params=querystring)
-        except:
+        except BaseException:
             pass
 
     def try_cache_request(self, query=None):
@@ -189,7 +192,7 @@ class IndividualRequest:
                             extracted_result = response.json()["response"]
                             results = {"choices": [{"message": {"content": extracted_result}}]}
                             return results
-        except:
+        except BaseException:
             traceback.print_exc()
             pass
         self.print_verbose("cache miss!")
@@ -214,7 +217,7 @@ class IndividualRequest:
                 if result is not None:
                     return result
             return None
-        except:
+        except BaseException:
             self.print_verbose(traceback.format_exc())
             return None
 

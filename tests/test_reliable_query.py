@@ -1,8 +1,8 @@
 import sys
 
-sys.path.append("..")
-
 from main import reliable_query
+
+sys.path.append("..")
 
 
 @reliable_query(user_email="ishaan_test@berri.ai")

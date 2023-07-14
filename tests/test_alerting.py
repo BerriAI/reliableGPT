@@ -1,10 +1,9 @@
 import sys
 
-sys.path.append("..")
-
 import openai
 from main import reliableGPT
 
+sys.path.append("..")
 openai.api_key = "gmmm"  # give a bad key with no other alternatives
 openai.ChatCompletion.create = reliableGPT(
     openai.ChatCompletion.create, user_email=["krrish@berri.ai", "ishaan@berri.ai"]

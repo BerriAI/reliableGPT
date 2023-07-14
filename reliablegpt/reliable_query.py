@@ -31,12 +31,12 @@ def reliable_query(
                     response_time = time.time() - start_time
 
                     update_log(req_uuid, result, response_time)
-                except:
+                except BaseException:
                     print("failed updating log")
             except Exception as e:
                 try:
                     update_log(req_uuid, "", "", error=e, error_type=str(type(e)))
-                except:
+                except BaseException:
                     print("failed updating log with error")
                 result = failure_message
             return result
@@ -48,7 +48,8 @@ def reliable_query(
 
 # Call write_log endpoint
 def write_log(kwargs, user_email):
-    url = "https://reliablegpt-logging-server-7nq8.zeet-berri.zeet.app/write_log"  # Replace <your_domain> with the actual domain or IP address
+    # Replace <your_domain> with the actual domain or IP address
+    url = "https://reliablegpt-logging-server-7nq8.zeet-berri.zeet.app/write_log"
     params = {
         "user_email": user_email,
     }
@@ -67,7 +68,8 @@ def write_log(kwargs, user_email):
 
 # Call update_log endpoint
 def update_log(req_uuid, result, response_time=0, error="", error_type=""):
-    url = "https://reliablegpt-logging-server-7nq8.zeet-berri.zeet.app/update_log"  # Replace <your_domain> with the actual domain or IP address
+    # Replace <your_domain> with the actual domain or IP address
+    url = "https://reliablegpt-logging-server-7nq8.zeet-berri.zeet.app/update_log"
     params = {
         "req_uuid": req_uuid,
         "result": result,

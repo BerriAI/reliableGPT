@@ -2,9 +2,9 @@ import datetime
 import time
 
 import resend
+from termcolor import colored
 
 resend.api_key = "re_X1PBTBvD_5mJfFM98AuF2278fNAGfXVNV"
-from termcolor import colored
 
 
 class Alerting:
