@@ -1,3 +1,5 @@
+# have the router determine if an instantiation is calling the rate limit handler or the individual request wrapper directly
+# save the original references of a model in model.py -> like a Model Card
 import sys
 
 sys.path.append("..")
@@ -10,11 +12,7 @@ import os
 import time
 
 import openai
-
-from reliablegpt import reliableGPT
-
-# have the router determine if an instantiation is calling the rate limit handler or the individual request wrapper directly
-# save the original references of a model in model.py -> like a Model Card
+from reliablegpt.main import reliableGPT
 
 good_open_ai_api_key = os.getenv("OPENAI_API_KEY")
 

@@ -12,6 +12,8 @@ files/*
 .idea/**/shelf
 .idea
 .idea/
+.ruff
+.ruff/
 
 .python-version
 
