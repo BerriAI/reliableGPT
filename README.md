@@ -67,6 +67,37 @@ Here's everything you can pass to reliableGPT
 | `max_threads` | int | Optional | Pass this in alongside `caching=True`, for it to handle the overloaded queue scenario |
 
 # 👨‍🔬 Use Cases
+## Use Caching around your Query Endpoint 🔥
+If you're seeing high-traffic and want to make sure all your users get a response, wrap your query endpoint with reliableCache. It monitors for high-thread utilization and responds with cached responses. 
+### Step 1. Import reliableCache
+```python
+from reliablegpt import reliableCache
+```
+### Step 2. Initialize reliableCache 
+```python
+# max_threads: the maximum number of threads you've allocated for flask to run (by default this is 1).
+# query_arg: the variable name you're using to pass the user query to your endpoint (Assuming this is in the params/args)
+# customer_instance_arg: unique identifier for that customer's instance (we'll put all cached responses for that customer within this bucket)
+# user_email: [REQUIRED] your user email - we will alert you when you're seeing high utilization 
+cache = reliableCache(max_threads=20, query_arg="query", customer_instance_arg="instance_id", user_email="krrish@berri.ai")
+```
+
+e.g. The number of threads for this flask app is `50`
+```python
+if __name__ == "__main__":
+  from waitress import serve
+  serve(app, host="0.0.0.0", port=4000, threads=50)
+```
+
+### Step 3. Decorate your endpoint 🚀
+```python
+## Decorate your endpoint with cache.cache_wrapper, this monitors for .. 
+## .. high thread utilization and sends cached responses when that happens
+@app.route("/test_func")
+@cache.cache_wrapper 
+def test_fn():
+  # your endpoint logic 
+```
 
 ## Switch between Azure OpenAI and raw OpenAI
 If you're using Azure OpenAI and facing issues like Read/Request Timeouts, Rate limits, etc. you can use reliableGPT 💪 to fall back to the raw OpenAI endpoints if your Azure OpenAI endpoint fails 
