@@ -7,6 +7,8 @@ import requests
 from flask import Flask, request
 from termcolor import colored
 
+from reliablegpt.cache import BaseCache
+
 
 class IndividualRequest:
     """A brief description of the class."""
@@ -15,12 +17,12 @@ class IndividualRequest:
         self,
         model=None,
         app: Flask = None,
-        fallback_strategy=[
+        fallback_strategy=(
             "gpt-3.5-turbo",
             "text-davinci-003",
             "gpt-4",
             "text-davinci-002",
-        ],
+        ),  # tuple as we do not want to allow the default to be mutable
         graceful_string="Sorry, the OpenAI API is currently down",
         user_email="",
         user_token="",
@@ -28,8 +30,7 @@ class IndividualRequest:
         logging_fn=None,
         backup_openai_key="",
         caching=False,
-        add_cache_func=None,
-        read_cache_func=None,
+        cache_store: BaseCache = None,
         alerting=None,
         max_threads=None,
         verbose=False,
@@ -49,8 +50,8 @@ class IndividualRequest:
         self.max_threads = max_threads
         self.print_verbose(f"INIT with threads {self.max_threads} {self.caching} {max_threads}")
         self.alerting = alerting
-        self.add_cache_func = add_cache_func
-        self.read_cache_func = read_cache_func
+        self.cache_store = cache_store
+        self.vector_cache = cache_store
         self.app = app
         if self.app:
             self.app.register_error_handler(Exception, self.handle_unhandled_exception)
@@ -140,9 +141,8 @@ class IndividualRequest:
     def add_cache(self, input_prompt, response):
         try:
             if self.caching:
-                if self.add_cache_func:
-                    self.add_cache_func(input_prompt, response)
-                    return
+                if self.cache_store:
+                    return self.cache_store.put(input_prompt, response)
                 else:
                     if request:
                         if request.args and request.args.get("user_email"):
@@ -168,9 +168,8 @@ class IndividualRequest:
         try:
             if query:
                 self.print_verbose("Inside the cache")
-                if self.read_cache_func:
-                    cache_result = self.read_cache_func(query)
-                    return cache_result
+                if self.cache_store:
+                    return self.cache_store.get(query)
                 else:
                     if request:
                         if request.args and request.args.get("user_email"):
