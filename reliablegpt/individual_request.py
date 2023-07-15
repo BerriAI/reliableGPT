@@ -7,7 +7,7 @@ import requests
 from flask import Flask, request
 from termcolor import colored
 
-from reliablegpt.cache import BaseCache
+from reliablegpt.cache import BaseCache, DefaultCache
 
 
 class IndividualRequest:
@@ -50,12 +50,15 @@ class IndividualRequest:
         self.max_threads = max_threads
         self.print_verbose(f"INIT with threads {self.max_threads} {self.caching} {max_threads}")
         self.alerting = alerting
-        self.cache_store = cache_store
-        self.vector_cache = cache_store
+        self.cache_store: BaseCache = self.init_cache(cache_store)
         self.app = app
         if self.app:
             self.app.register_error_handler(Exception, self.handle_unhandled_exception)
             self.app.register_error_handler(500, self.handle_unhandled_exception)
+
+    @staticmethod
+    def init_cache(cache_store: BaseCache):
+        return cache_store or DefaultCache()
 
     def handle_unhandled_exception(self, e):
         self.print_verbose(colored("UNHANDLED EXCEPTION OCCURRED", "red"))
@@ -95,7 +98,7 @@ class IndividualRequest:
                         print(kwargs["messages"])
                         input_prompt = "\n".join(message["content"] for message in kwargs["messages"])
                         self.print_verbose("queue depth is higher than the threshold, start caching")
-                        result = self.try_cache_request(query=input_prompt)
+                        result = self.try_cache_request(input_prompt=input_prompt)
                         if self.alerting:
                             # save_exception
                             self.alerting.add_error(
@@ -138,64 +141,35 @@ class IndividualRequest:
             self.print_verbose("catches the error")
             return self.handle_exception(args, kwargs, e)
 
-    def add_cache(self, input_prompt, response):
+    def add_cache(self, input_prompt: str, response: str):
+        if not self.caching:
+            return
+
         try:
-            if self.caching:
-                if self.cache_store:
-                    return self.cache_store.put(input_prompt, response)
-                else:
-                    if request:
-                        if request.args and request.args.get("user_email"):
-                            customer_id = request.args.get("user_email")
-                            if request.args.get("instance_id"):
-                                instance_id = request.args.get("instance_id")
-                            else:
-                                instance_id = 0000  # default instance id if none passed in
-                            user_email = self.user_email
-                            url = "https://reliablegpt-logging-server-7nq8.zeet-berri.zeet.app/add_cache"
-                            querystring = {
-                                "customer_id": customer_id,
-                                "instance_id": instance_id,
-                                "user_email": user_email,
-                                "input_prompt": input_prompt,
-                                "response": response,
-                            }
-                            response = requests.post(url, params=querystring)
+            kwargs: dict = {
+                "request": request,
+                "user_email": self.user_email,
+                "customer_id": request.args.get("user_email"),
+            }
+            return self.cache_store.put(input_prompt=input_prompt, response=response, **kwargs)
         except BaseException:
             pass
 
-    def try_cache_request(self, query=None):
+    def try_cache_request(self, input_prompt=None):
+        if not input_prompt or not self.caching:
+            return
+
         try:
-            if query:
-                self.print_verbose("Inside the cache")
-                if self.cache_store:
-                    return self.cache_store.get(query)
-                else:
-                    if request:
-                        if request.args and request.args.get("user_email"):
-                            customer_id = request.args.get("user_email")
-                            if request.args.get("instance_id"):
-                                instance_id = request.args.get("instance_id")
-                            else:
-                                instance_id = 0000  # default instance id if none passed in
-                            user_email = self.user_email
-                            url = "https://reliablegpt-logging-server-7nq8.zeet-berri.zeet.app/get_cache"
-                            querystring = {
-                                "customer_id": customer_id,
-                                "instance_id": instance_id,
-                                "user_email": user_email,
-                                "input_prompt": query,
-                            }
-                            response = requests.get(url, params=querystring)
-                            self.print_verbose(f"cached response: {response.json()}")
-                            extracted_result = response.json()["response"]
-                            results = {"choices": [{"message": {"content": extracted_result}}]}
-                            return results
+            self.print_verbose("Inside the cache")
+            kwargs: dict = {
+                "request": request,
+                "user_email": self.user_email,
+                "customer_id": request.args.get("user_email"),
+            }
+            return self.cache_store.get(input_prompt=input_prompt, **kwargs)
         except BaseException:
             traceback.print_exc()
-            pass
         self.print_verbose("cache miss!")
-        return None
 
     def fallback_request(self, args, kwargs, fallback_strategy):
         try:
@@ -392,7 +366,7 @@ class IndividualRequest:
                 if "messages" in kwargs and self.caching:
                     print(kwargs["messages"])
                     input_prompt = "\n".join(message["content"] for message in kwargs["messages"])
-                    cached_response = self.try_cache_request(query=input_prompt)
+                    cached_response = self.try_cache_request(input_prompt=input_prompt)
                     if cached_response is None:
                         pass
                     else:
