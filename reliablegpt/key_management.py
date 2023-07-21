@@ -1,5 +1,6 @@
-import requests
 import openai
+import requests
+
 
 class reliableKey:
     token = "your-token-here"
@@ -20,7 +21,10 @@ class reliableKey:
         cls.valid_api_key = False
         cls.invalid_key_value = invalid_key
         if cls.recent_get_key_params:
-            openai.api_key = cls.get_key(llm_provider=cls.recent_get_key_params["llm_provider"], local_token=cls.recent_get_key_params["local_token"])
+            openai.api_key = cls.get_key(
+                llm_provider=cls.recent_get_key_params["llm_provider"],
+                local_token=cls.recent_get_key_params["local_token"],
+            )
 
     @classmethod
     def get_key(cls, llm_provider, local_token=None):
@@ -30,18 +34,21 @@ class reliableKey:
             api_key = None
             if llm_provider in cls.hot_cache and cls.valid_api_key:
                 api_key = cls.hot_cache[llm_provider]
-            else: 
+            else:
                 querystring = {"llm_provider": llm_provider, "token": cls.token}
                 if local_token:
                     querystring["local_token"] = local_token
                 if not cls.valid_api_key:
                     print(f"invalid key value in get_key: {cls.invalid_key_value}")
                     querystring["invalid_api_key"] = cls.invalid_key_value
-                response = requests.get(cls.api_url+"/get_key", params=querystring)
+                response = requests.get(cls.api_url + "/get_key", params=querystring)
                 print(response.text)
                 api_key = response.json()["api_key"]
                 cls.hot_cache[llm_provider] = api_key
                 cls.valid_api_key = True
             return api_key
-        except Exception as e:
-            raise Exception("Error caused due to either a bad token or non-existent llm provider. If you're testing locally, make sure to download your .env containing your local token.")
+        except Exception:
+            raise Exception(
+                "Error caused due to either a bad token or non-existent llm provider. If you're testing locally,"
+                " make sure to download your .env containing your local token."
+            )

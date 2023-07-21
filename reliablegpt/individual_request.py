@@ -34,6 +34,7 @@ class IndividualRequest:
         alerting=None,
         max_threads=None,
         verbose=False,
+        **kwargs,
     ):
         # Initialize instance variables
         self.model = model
