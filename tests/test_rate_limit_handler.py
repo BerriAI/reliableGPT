@@ -6,6 +6,7 @@ import sys
 import time
 
 import openai
+import pytest
 from dotenv import load_dotenv
 
 from reliablegpt.main import reliableGPT
@@ -75,7 +76,8 @@ def test_embedding_bad_key():
         print("text")
         return openai.Embedding.create(input=[text], model=model)["data"][0]["embedding"]
 
-    get_embedding("GM")
+    with pytest.raises(TypeError):
+        get_embedding("GM")
 
 
 test_embedding_bad_key()

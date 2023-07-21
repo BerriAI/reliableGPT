@@ -138,6 +138,8 @@ def reliableGPT(
     max_threads=None,
     backup_openai_key=None,
     verbose=False,
+    queue_requests=False,
+    model_limits_dir=None,
 ):
     """Determine if an instantiation is calling the rate limit handler
     or the individual request wrapper directly and return the correct object"""
