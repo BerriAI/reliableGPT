@@ -6,11 +6,14 @@ class Settings(BaseSettings):
     and validate all the env variables as it's currently the preferred go-to approach in Python world"""
 
     ENVIRONMENT: str = Field(env="ENVIRONMENT", default="local")
-    app_name: str = "reliablegpt"
+    APP_NAME: str = "reliablegpt"
 
     REDIS_HOST: str = Field(env="REDIS_HOST", default="localhost")
     REDIS_PORT: int = Field(env="REDIS_PORT", default=6379)
     REDIS_DB: int = Field(env="REDIS_DB", default=0)
+
+    class Config:
+        env_file = ".env"
 
 
 settings = Settings()
