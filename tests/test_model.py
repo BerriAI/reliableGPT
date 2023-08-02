@@ -3,6 +3,7 @@ import sys
 
 import openai
 from dotenv import load_dotenv
+from openai.error import APIConnectionError, InvalidRequestError
 
 from reliablegpt.model import Model
 
@@ -18,4 +19,7 @@ obj = Model(openai.ChatCompletion.create)
 
 create_completion = obj.get_original_completion()
 
-print(create_completion(model="text-davinci-003", prompt="Hello world"))
+try:
+    print(create_completion(model="text-davinci-003", prompt="Hello world"))
+except (APIConnectionError, InvalidRequestError):
+    print("API Connection Error, openai not available")

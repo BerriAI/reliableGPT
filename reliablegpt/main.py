@@ -1,10 +1,10 @@
 # # Prod Imports
-import requests
-from flask import Flask
 
-# # Dev Imports
+import requests
+
+# Dev Imports
 # from IndividualRequest import IndividualRequest
-# from reliablegpt.model import Model
+# from Model import Model
 # from Alerting import Alerting
 from posthog import Posthog
 
@@ -12,23 +12,12 @@ from reliablegpt.alerting import Alerting
 from reliablegpt.individual_request import IndividualRequest
 from reliablegpt.model import Model
 
-posthog = Posthog(
-    project_api_key="phc_yZ30KsPzRXd3nYaET3VFDmquFKtMZwMTuFKVOei6viB",
-    host="https://app.posthog.com",
-)
+posthog = Posthog(project_api_key="phc_yZ30KsPzRXd3nYaET3VFDmquFKtMZwMTuFKVOei6viB", host="https://app.posthog.com")
 
 alerting = Alerting()
 
 
-def save_exception(
-    type,
-    user_email,
-    result="",
-    original_error="",
-    error2="",
-    function_name="",
-    kwargs={},
-):
+def save_exception(type, user_email, result="", original_error="", error2="", function_name="", kwargs={}):
     try:
         # print("in save exception on reliableGPT")
         # url = 'http://0.0.0.0:5000/save_exception'
@@ -46,7 +35,7 @@ def save_exception(
         # print(f"in save exception on reliableGPT, sending req {data}")
         response = requests.post(url, json=data)
     except Exception:
-        return
+        pass
 
     return response
 
@@ -117,32 +106,29 @@ def save_request(
             for error in errors:
                 alerting.add_error(error)
             # send_emails_task(self.user_email, posthog_metadata, self.send_notification)
-    except BaseException:
+    except:  # noqa
+        pass
         return  # safe function, should not impact error handling if logging fails
 
 
 def reliableGPT(
     openai_create_function,
-    app: Flask = None,
-    fallback_strategy=[
-        "gpt-3.5-turbo",
-        "text-davinci-003",
-        "gpt-4",
-        "text-davinci-002",
-    ],
+    fallback_strategy=["gpt-3.5-turbo", "text-davinci-003", "gpt-4", "text-davinci-002"],
+    azure_fallback_strategy=None,
     graceful_string="Sorry, the OpenAI API is currently down",
     user_email="",
     user_token="",
     send_notification=True,
     caching=False,
-    add_cache_func=None,
-    read_cache_func=None,
     max_threads=None,
     backup_openai_key=None,
+    _test=False,
     verbose=False,
+    queue_requests=False,
+    model_limits_dir=None,
 ):
-    """Determine if an instantiation is calling the rate limit handler
-    or the individual request wrapper directly and return the correct object"""
+    """Determine if an instantiation is calling the rate limit handler or the individual request wrapper
+    directly and return the correct object"""
 
     primary_email = ""  # which api key management is mapped to
     ## Add email for alerting
@@ -161,8 +147,8 @@ def reliableGPT(
     ## Route to the right object
     return IndividualRequest(
         model,
-        app=app,
         fallback_strategy=fallback_strategy,
+        azure_fallback_strategy=azure_fallback_strategy,
         graceful_string=graceful_string,
         user_email=primary_email,
         user_token=user_token,
@@ -170,9 +156,8 @@ def reliableGPT(
         send_notification=send_notification,
         backup_openai_key=backup_openai_key,
         caching=caching,
-        add_cache_func=None,
-        read_cache_func=None,
         max_threads=max_threads,
         alerting=alerting,
+        _test=_test,
         verbose=verbose,
     )

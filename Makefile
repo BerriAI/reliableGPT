@@ -14,7 +14,6 @@ isort:
 lint:
 	make black
 	make ruff 
-	make isort
 
 pre-commit:
 	pre-commit run --all-files
