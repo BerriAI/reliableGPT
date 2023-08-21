@@ -1,4 +1,7 @@
 # 💪 reliableGPT: Stop failing customer requests for your LLM App 🚀
+
+⚠️ DEPRECATION WARNING: [LiteLLM](https://github.com/BerriAI/litellm) is our new home. Thank you for checking us out! ❤️
+
 [![litellm](https://img.shields.io/badge/%20%F0%9F%9A%85%20liteLLM-OpenAI%7CAzure%7CAnthropic%7CPalm%7CCohere-blue?color=green)](https://github.com/BerriAI/litellm)
 
 [![](https://dcbadge.vercel.app/api/server/wuPM9dRgDw)](https://discord.gg/wuPM9dRgDw)
