@@ -1,0 +1,42 @@
+name: Continuous Delivery
+
+on: [pull_request]
+
+jobs:
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.10"
+      - name: Run pre-commit
+        uses: pre-commit/action@v2.0.0
+
+  test:
+    permissions:
+      pull-requests: write
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.10"
+      - name: Install poetry
+        uses: abatilo/actions-poetry@v2
+        with:
+          poetry-version: 1.3.2
+      - name: Install dependencies
+        run: poetry install --all-extras
+      - name: Static code checks
+        run: |
+          pip install flake8
+          make lint
+      - name: Run tests
+        run: make test

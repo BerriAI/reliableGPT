@@ -204,3 +204,37 @@ You own your keys, and can delete them whenever you want.
 ## Support 
 Reach out to us on [Discord](https://discord.gg/WXFfTeEXRh) or Email us at ishaan@berri.ai & krrish@berri.ai
 
+## Development
+The suggested setup is to go with pyenv and poetry.
+
+
+### Local development setup
+
+Prerequisites:
+
+* [Python version 3.10]()
+* [poetry](https://python-poetry.org/docs/#installation)
+* [pyenv]
+
+```bash
+pyenv install 3.10
+pyenv local 3.10
+python -m pip install poetry
+python -m poetry install
+
+```
+
+### Style & Formatting
+
+Style & formatting checks are run on every commit as part of the CI Pipeline
+
+On the python side the project is setup to use the following linting and formatting tools:
+- [black](https://black.readthedocs.io/)
+- [ruff](https://beta.ruff.rs/docs/)
+
+If you have this project up and running locally, you can run these checks:
+```bash
+make lint
+```
+
+There's pre-commit package being used in this project.
